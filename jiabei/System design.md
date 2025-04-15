@@ -50,7 +50,6 @@ https://www.hellointerview.com/learn/system-design/problem-breakdowns/uber
     - When reading, use pagination by time
 
 - "One requirement was filtering by time range and order status. Can you efficiently support this on NoSQL using your current SK design?"
-    - 
 
 - "Each event results in writes to 3 different services (Customer, Dasher, Restaurant). How do you manage consistency and durability in the face of partial failures?"
 
@@ -58,3 +57,28 @@ https://www.hellointerview.com/learn/system-design/problem-breakdowns/uber
 ## improved design
 - Order service receives the requests, and update to order DB.
 - The change to order DB also emitts an event to a MQ. The subscribers use this event to async write to other tables
+
+
+# Design Twitter
+
+- How would you design the system to handle high fan-out scenarios—such as when a celebrity with 100 million followers posts a new update? Would you use fan-out on write or fan-out on read, and why?
+    - Hybrid aproach
+
+- Suppose you choose to precompute user feeds. What strategies would you use to keep the precomputed feeds fresh and consistent with new content or changes (like deleted posts or changes in relevance)? How would you balance storage cost vs latency?
+    - Keep the feed for active users in cache
+    - feed generation runs on a write trigger.
+
+- Precompute prioritization: how would you prioritize whose feeds to precompute and when?
+    - Define tier thresholds. Precompute differently for different tier of users
+
+- Partial Fan-out + Merge strategy: How would you implement the hibrid aproach? Prevent duplicate posts and stale views
+    - Use post ID with versioning and conflict resolution policies.
+    - Define a merge policy
+
+- Cold start strategy: Inactive user loged in the system how would the feed generated?
+    - Show personalized trending limit to recent 1-2 days, generate the feed during this time.
+
+- Feed Mutation Tracking: How would you track which users' feed caches include a specific post so that the post update can be propagated?
+
+- Backpressure Control on fan out: during an unexpected fan-out storm, how would you system protect itself while still delivering decent UX?
+    - rate limiting, dynamic shedding.
