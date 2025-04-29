@@ -24,3 +24,16 @@
 1094-Car Pooling, O(2N log N): sort array + heap -> O(N log N): 用TreeMap去存各个地点的乘客数量变化 -> O(max(N, distance)): 如果距离有限且不大，可以bucket sort，代替TreeMap<br/>
 2265-Count Nodes Equal to Average of Subtree (没啥特别的)<br/>
 [329-Longest Increasing Path in a Matrix](<./coding/329-Longest Increasing Path in a Matrix.java>)<br/>
+
+## 04/27/2025
+605-Can Place Flowers, 有1/种花 +2，可以再优化一点点<br/>
+[200-Number of Islands](<./coding/200-Number of Islands.java>)<br/>
+[124-Binary Tree Maximum Path Sum](<./coding/124-Binary Tree Maximum Path Sum.java>)<br/>
+[815-Bus Routes](<./coding/815-Bus Routes.java>)<br/>
+
+## 04/28/2025
+394-Decode String
+8-String to Integer (atoi)
+729-My Calendar I, TreeMap, ceiling/floor
+[269-Alien Dictionary](<./coding/269-Alien Dictionary.java>)<br/>
+210-Course Schedule II, topological sort
