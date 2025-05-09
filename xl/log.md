@@ -37,3 +37,21 @@
 729-My Calendar I, TreeMap, ceiling/floor<br/>
 [269-Alien Dictionary](<./coding/269-Alien Dictionary.java>)<br/>
 210-Course Schedule II, topological sort<br/>
+
+## 05/02/2025
+[1438-Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit](<./coding/1438-Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit.java>)<br/>
+977-Squares of a Sorted Array
+[1861-Rotating the Box](<./coding/1861-Rotating the Box.java>)<br/>
+679-24 Game，给这题一拳，没有过分特殊的，只注意用epsilon value处理real division，因为限制了只有1-9，所以随便一个0.1就保证正确
+
+## 05/03/2025
+362-Design Hit Counter
+[305-Number of Islands II](<./coding/305-Number of Islands II.java>)<br/>
+[384-Shuffle an Array](<./coding/384-Shuffle an Array.java>)<br/>
+[1814-Count Nice Pairs in an Array](<./coding/1814-Count Nice Pairs in an Array.java>)<br/>
+
+## 05/04/2025
+3071-Minimum Operations to Write the Letter Y on a Grid, 就en比，只有3种值<br/>
+286-Walls and Gates, 直接bfs，没啥特殊<br/>
+498-Diagonal Traverse<br/>
+假装周一还没过完<img src="./assets/Jerry - 怪不好意思的.png" height="100px"><br/>
