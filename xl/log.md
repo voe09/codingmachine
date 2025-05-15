@@ -40,12 +40,12 @@
 
 ## 05/02/2025
 [1438-Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit](<./coding/1438-Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit.java>)<br/>
-977-Squares of a Sorted Array
+977-Squares of a Sorted Array<br/>
 [1861-Rotating the Box](<./coding/1861-Rotating the Box.java>)<br/>
 679-24 Game，给这题一拳，没有过分特殊的，只注意用epsilon value处理real division，因为限制了只有1-9，所以随便一个0.1就保证正确
 
 ## 05/03/2025
-362-Design Hit Counter
+362-Design Hit Counter<br/>
 [305-Number of Islands II](<./coding/305-Number of Islands II.java>)<br/>
 [384-Shuffle an Array](<./coding/384-Shuffle an Array.java>)<br/>
 [1814-Count Nice Pairs in an Array](<./coding/1814-Count Nice Pairs in an Array.java>)<br/>
@@ -55,3 +55,29 @@
 286-Walls and Gates, 直接bfs，没啥特殊<br/>
 498-Diagonal Traverse<br/>
 假装周一还没过完<img src="./assets/Jerry - 怪不好意思的.png" height="100px"><br/>
+
+## 05/05/2025
+[564-Find the Closest Palindrome](<./coding/564-Find the Closest Palindrome.java>) <img src="./assets/啊？.gif" height="100px"><br/>
+[332-Reconstruct Itinerary](<./coding/332-Reconstruct Itinerary.java>)<br/>
+[3161-Block Placement Queries](<./coding/3161-Block Placement Queries.java>)<br/>
+490-The Maze<br/>
+
+## 05/06/2025
+[505-The Maze II](<./coding/505-The Maze II.java>)<br/>
+238-Product of Array Except Self<br/>
+[3466-Maximum Coin Collection](<./coding/3466-Maximum Coin Collection.java>)<br/>
+[322-Coin Change](<./coding/322-Coin Change.java>)<br/>
+
+## 05/07/2025
+[2768-Number of Black Blocks](<./coding/2768-Number of Black Blocks.java>)<br/>
+230-Kth Smallest Element in a BST<br/>
+36-Valid Sudoku<br/>
+547-Number of Provinces<br/>
+
+## 05/08/2025
+[399-Evaluate Division](<./coding/399-Evaluate Division.java>), 折磨丸<br/>
+[465-Optimal Account Balancing](<./coding/465-Optimal Account Balancing.java>), 出这道题更是重量级，超级折磨丸 <img src="./assets/啊？.gif" height="100px"><br/>
+[1405-Longest Happy String](<./coding/1405-Longest Happy String.java>)<br/>
+[694-Number of Distinct Islands](<./coding/694-Number of Distinct Islands.java>)<br/>
+
+
