@@ -80,4 +80,23 @@
 [1405-Longest Happy String](<./coding/1405-Longest Happy String.java>)<br/>
 [694-Number of Distinct Islands](<./coding/694-Number of Distinct Islands.java>)<br/>
 
+## 05/09/2025
+[212-Word Search II](<./coding/212-Word Search II.java>)<br/>
+198-House Robber<br/>
+51-N-Queens<br/>
+[54-Spiral Matrix](<./coding/54-Spiral Matrix.java>)<br/>
+
+## 05/10/2025
+417-Pacific Atlantic Water Flow，两遍dfs/bfs，没有特殊技巧，一顿操作猛如虎，一看战绩0-5<br/>
+934-Shortest Bridge<br/>
+695-Max Area of Island<br/>
+[317-Shortest Distance from All Buildings](<./coding/317-Shortest Distance from All Buildings.java>)<br/>
+
+## 05/11/2025
+2303-Calculate Amount Paid in Taxes<br/>
+[438-Find All Anagrams in a String](<./coding/438-Find All Anagrams in a String.java>)<br/>
+[621-Task Scheduler](<./coding/621-Task Scheduler.java>)<br/>
+[2050-Parallel Courses III](<./coding/2050-Parallel Courses III.java>)<br/>
+感觉要嘎嘎不过来。。<img src="./assets/困的一.gif" height="100px"><br/>
+
 
