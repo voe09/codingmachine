@@ -99,4 +99,34 @@
 [2050-Parallel Courses III](<./coding/2050-Parallel Courses III.java>)<br/>
 感觉要嘎嘎不过来。。<img src="./assets/困的一.gif" height="100px"><br/>
 
+## 05/12/2025
+[2062-Count Vowel Substrings of a String](<./coding/2062-Count Vowel Substrings of a String.java>)<br/>
+[2467-Most Profitable Path in a Tree](<./coding/2467-Most Profitable Path in a Tree.java>)<br/>
+21-Merge Two Sorted Lists<br/>
+[1235-Maximum Profit in Job Scheduling](<./coding/1235-Maximum Profit in Job Scheduling.java>), 用array代替TreeMap快点儿，也可以从后往前，或者recursion + mem<br/>
+
+## 05/13/2025
+[1268-Search Suggestions System](<./coding/1268-Search Suggestions System.java>)<br/>
+[1834-Single-Threaded CPU](<./coding/1834-Single-Threaded CPU.java>)<br/>
+2049-Count Nodes With the Highest Score<br/>
+[875-Koko Eating Bananas](<./coding/875-Koko Eating Bananas.java>)<br/>
+
+## 05/14/2025
+55-Jump Game<br/>
+[84-Largest Rectangle in Histogram](<./coding/84-Largest Rectangle in Histogram.java>)<br/>
+687-Longest Univalue Path<br/>
+[1233-Remove Sub-Folders from the Filesystem](<./coding/1233-Remove Sub-Folders from the Filesystem.java>)<br/>
+
+## 05/15/2025
+[402-Remove K Digits](<./coding/402-Remove K Digits.java>)<br/>
+[1631-Path With Minimum Effort](<./coding/1631-Path With Minimum Effort.java>)<br/>
+[739-Daily Temperatures](<./coding/739-Daily Temperatures.java>)<br/>
+49-Group Anagrams<br/>
+
+## 05/16/2025
+[907-Sum of Subarray Minimums](<./coding/907-Sum of Subarray Minimums.java>)<br/>
+[1944-Number of Visible People in a Queue](<./coding/1944-Number of Visible People in a Queue.java>)<br/>
+[503-Next Greater Element II](<./coding/503-Next Greater Element II.java>)<br/>
+[496-Next Greater Element I](<./coding/496-Next Greater Element I.java>)<br/>
+
 
