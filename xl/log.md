@@ -42,7 +42,7 @@
 [1438-Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit](<./coding/1438-Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit.java>)<br/>
 977-Squares of a Sorted Array<br/>
 [1861-Rotating the Box](<./coding/1861-Rotating the Box.java>)<br/>
-679-24 Game，给这题一拳，没有过分特殊的，只注意用epsilon value处理real division，因为限制了只有1-9，所以随便一个0.1就保证正确
+679-24 Game，给这题一拳，没有过分特殊的，只注意用epsilon value处理real division，因为限制了只有1-9，所以随便一个0.1就保证正确<br/>
 
 ## 05/03/2025
 362-Design Hit Counter<br/>
@@ -128,5 +128,35 @@
 [1944-Number of Visible People in a Queue](<./coding/1944-Number of Visible People in a Queue.java>)<br/>
 [503-Next Greater Element II](<./coding/503-Next Greater Element II.java>)<br/>
 [496-Next Greater Element I](<./coding/496-Next Greater Element I.java>)<br/>
+
+## 05/19/2025
+[769-Max Chunks To Make Sorted](<./coding/769-Max Chunks To Make Sorted.java>)<br/>
+[901-Online Stock Span](<./coding/901-Online Stock Span.java>)<br/>
+[1526-Minimum Number of Increments on Subarrays to Form a Target Array](<./coding/1526-Minimum Number of Increments on Subarrays to Form a Target Array.java>)<br/>
+[70-Climbing Stairs](<./coding/70-Climbing Stairs.java>)<br/>
+
+## 05/20/2025
+[122-Best Time to Buy and Sell Stock II](<./coding/122-Best Time to Buy and Sell Stock II.java>)<br/>
+[838-Push Dominoes](<./coding/838-Push Dominoes.java>)<br/>
+[790-Domino and Tromino Tiling](<./coding/790-Domino and Tromino Tiling.java>)<br/>
+[456-132 Pattern](<./coding/456-132 Pattern.java>)<br/>
+
+## 05/21/2025
+[983-Minimum Cost For Tickets](<./coding/983-Minimum Cost For Tickets.java>)<br/>
+[221-Maximal Square](<./coding/221-Maximal Square.java>)<br/>
+[85-Maximal Rectangle](<./coding/85-Maximal Rectangle.java>), 又一个超级折磨丸 <img src="./assets/啊？.gif" height="100px"><br/>
+[494-Target Sum](<./coding/494-Target Sum.java>)<br/>
+
+## 05/22/2025
+[72-Edit Distance](<./coding/72-Edit Distance.java>)<br/>
+[45-Jump Game II](<./coding/45-Jump Game II.java>)<br/>
+[2338-Count the Number of Ideal Arrays](<./coding/2338-Count the Number of Ideal Arrays.java>), 终极折磨丸 <img src="./assets/啊？.gif" height="100px"><br/>
+[1931-Painting a Grid With Three Different Colors](<./coding/1931-Painting a Grid With Three Different Colors.java>), 没想到还有高手，折磨丸的师伯来了 <img src="./assets/啊？.gif" height="150px"><br/>
+
+## 05/23/2025
+[140-Word Break II](<./coding/140-Word Break II.java>)<br/>
+509-Fibonacci Number<br/>
+[32-Longest Valid Parentheses](<./coding/32-Longest Valid Parentheses.java>)<br/>
+[410-Split Array Largest Sum](<./coding/410-Split Array Largest Sum.java>)<br/>
 
 
