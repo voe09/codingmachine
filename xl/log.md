@@ -159,4 +159,77 @@
 [32-Longest Valid Parentheses](<./coding/32-Longest Valid Parentheses.java>)<br/>
 [410-Split Array Largest Sum](<./coding/410-Split Array Largest Sum.java>)<br/>
 
+## 05/26/2025
+[2571-Minimum Operations to Reduce an Integer to 0](<./coding/2571-Minimum Operations to Reduce an Integer to 0.java>)<br/>
+[2572-Count the Number of Square-Free Subsets](<./coding/2572-Count the Number of Square-Free Subsets.java>)，写起来嫩麻烦，只是med<img src="./assets/啊？.gif" height="100px"><br/>
+[1857-Largest Color Value in a Directed Graph](<./coding/1857-Largest Color Value in a Directed Graph.java>)<br/>
+[472-Concatenated Words](<./coding/472-Concatenated Words.java>)<br/>
+
+## 05/27/2025
+[152-Maximum Product Subarray](<./coding/152-Maximum Product Subarray.java>)<br/>
+[1062-Longest Repeating Substring](<./coding/1062-Longest Repeating Substring.java>)<br/>
+[1044-Longest Duplicate Substring](<./coding/1044-Longest Duplicate Substring.java>)<br/>
+[91-Decode Ways](<./coding/91-Decode Ways.java>)<br/>
+
+## 05/28/2025
+[337-House Robber III](<./coding/337-House Robber III.java>)<br/>
+[698-Partition to K Equal Sum Subsets](<./coding/698-Partition to K Equal Sum Subsets.java>)<br/>
+[1092-Shortest Common Supersequence](<./coding/1092-Shortest Common Supersequence.java>)<br/>
+[787-Cheapest Flights Within K Stops](<./coding/787-Cheapest Flights Within K Stops.java>)<br/>
+
+## 05/29/2025
+[689-Maximum Sum of 3 Non-Overlapping Subarrays](<./coding/689-Maximum Sum of 3 Non-Overlapping Subarrays.java>)<br/>
+[213-House Robber II](<./coding/213-House Robber II.java>)<br/>
+[174-Dungeon Game](<./coding/174-Dungeon Game.java>)<br/>
+[516-Longest Palindromic Subsequence](<./coding/516-Longest Palindromic Subsequence.java>)<br/>
+
+## 05/30/2025
+[1335-Minimum Difficulty of a Job Schedule](<./coding/1335-Minimum Difficulty of a Job Schedule.java>)<br/>
+[96-Unique Binary Search Trees](<./coding/96-Unique Binary Search Trees.java>)<br/>
+[115-Distinct Subsequences](<./coding/115-Distinct Subsequences.java>)<br/>
+[678-Valid Parenthesis String](<./coding/678-Valid Parenthesis String.java>)<br/>
+
+<img src="./assets/Jerry - 怪不好意思的.png" height="100px"><br/>
+## 07/01/2025
+[435-Non-overlapping Intervals](<./coding/435-Non-overlapping Intervals.java>)<br/>
+[1751-Maximum Number of Events That Can Be Attended II](<./coding/1751-Maximum Number of Events That Can Be Attended II.java>)<br/>
+[542-01 Matrix](<./coding/542-01 Matrix.java>)<br/>
+[714-Best Time to Buy and Sell Stock with Transaction Fee](<./coding/714-Best Time to Buy and Sell Stock with Transaction Fee.java>)<br/>
+
+## 07/02/2025
+[518-Coin Change II](<./coding/518-Coin Change II.java>)<br/>
+[188-Best Time to Buy and Sell Stock IV](<./coding/188-Best Time to Buy and Sell Stock IV.java>)<br/>
+[792-Number of Matching Subsequences](<./coding/792-Number of Matching Subsequences.java>)<br/>
+[464-Can I Win](<./coding/464-Can I Win.java>)<br/>
+
+## 07/03/2025
+[95-Unique Binary Search Trees II](<./coding/95-Unique Binary Search Trees II.java>)<br/>
+[486-Predict the Winner](<./coding/486-Predict the Winner.java>)<br/>
+[650-2 Keys Keyboard](<./coding/650-2 Keys Keyboard.java>)<br/>
+[120-Triangle](<./coding/120-Triangle.java>)<br/>
+
+## 07/04/2025
+[132-Palindrome Partitioning II](<./coding/132-Palindrome Partitioning II.java>)<br/>
+[131-Palindrome Partitioning](<./coding/131-Palindrome Partitioning.java>)<br/>
+[788-Rotated Digits](<./coding/788-Rotated Digits.java>)<br/>
+[718-Maximum Length of Repeated Subarray](<./coding/718-Maximum Length of Repeated Subarray.java>)<br/>
+
+## 07/07/2025
+[1048-Longest String Chain](<./coding/1048-Longest String Chain.java>)<br/>
+[1277-Count Square Submatrices with All Ones](<./coding/1277-Count Square Submatrices with All Ones.java>)<br/>
+[1387-Sort Integers by The Power Value](<./coding/1387-Sort Integers by The Power Value.java>)<br/>
+[1644-Lowest Common Ancestor of a Binary Tree II](<./coding/1644-Lowest Common Ancestor of a Binary Tree II.java>)<br/>
+
+## 07/08/2025
+[1483-Kth Ancestor of a Tree Node](<./coding/1483-Kth Ancestor of a Tree Node.java>)<br/>
+[33-Search in Rotated Sorted Array](<./coding/33-Search in Rotated Sorted Array.java>)<br/>
+[102-Binary Tree Level Order Traversal](<./coding/102-Binary Tree Level Order Traversal.java>)<br/>
+[556-Next Greater Element III](<./coding/556-Next Greater Element III.java>)<br/>
+
+## 07/09/2025
+[1060-Missing Element in Sorted Array](<./coding/1060-Missing Element in Sorted Array.java>)<br/>
+[1209-Remove All Adjacent Duplicates in String II](<./coding/1209-Remove All Adjacent Duplicates in String II.java>)<br/>
+[7-Reverse Integer](<./coding/7-Reverse Integer.java>)<br/>
+[48-Rotate Image](<./coding/48-Rotate Image.java>)<br/>
+
 
