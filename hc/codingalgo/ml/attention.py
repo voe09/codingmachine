@@ -77,3 +77,93 @@ for epoch in range(num_epochs):
 
   if (epoch + 1) % 10 == 0:
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+
+
+# 09/29 - simple self attn
+import torch
+import torch.nn.functional as F
+
+from torch import nn
+
+class SelfAttention(nn.Module):
+
+  def __init__(self, emb_dim: int):
+    super().__init__()
+    # WQ dxd, WK dxd WV dxd
+    self.q_proj = nn.Linear(emb_dim, emb_dim)
+    self.k_proj = nn.Linear(emb_dim, emb_dim)
+    self.v_proj = nn.Linear(emb_dim, emb_dim)
+    self.o_proj = nn.Linear(emb_dim, emb_dim)
+    # Original impl
+    """
+    self.o_proj = nn.Sequential(nn.Linear(emb_dim, emb_dim), nn.SiLU())
+    acts like a linear layer but not necessary and is not the standard
+    """
+
+    self.d = emb_dim
+    self.scaling = 1 / (emb_dim ** 0.5)
+
+    ## original impl
+    """
+    self.d = torch.tensor(emb_dim)
+    self.scaling = 1 / torch.sqrt(self.d) -> easy to lead tensor device mismatch
+    """
+
+  def forward(self, X: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:
+    # X: (b, S, d)
+    Q = self.q_proj(X) # b, S, d
+    K = self.k_proj(X) # b, S, d
+    V = self.v_proj(X) # b, S, d
+
+    # attn weights, softmax(QK.T/sqrt(d))
+    attn_weights = Q @ K.transpose(-2, -1) * self.scaling # (b, S, S)
+    if mask is not None: # original: not implemented
+      attn_weights = attn_weights.masked_fill(mask == 0, float("-inf"))
+    attn_weights = F.softmax(attn_weights, dim=-1) # (b, S, S)
+    # original impl attn_weights = F.softmax(attn_weights) # (b, S, S) -> while it apply along the last dim which is right, it might be perform incorrectly when we have multi head attn
+
+    attn_values = attn_weights @ V # (b, S, d)
+
+    outputs = self.o_proj(attn_values)
+
+    return outputs
+  
+n = 1000
+seqLen = 10
+emb_dim = 10
+eps = 1e-3
+
+data = torch.randn(n, seqLen, emb_dim)
+for i in range(3, seqLen):
+  data[:, i, :] = 0.2 * data[:, i-2, :] + 0.8 * data[:, i - 1, :] + eps
+
+
+targets = data.clone()
+
+model = SelfAttention(emb_dim)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+criteria = nn.MSELoss()
+
+epochs = 100
+batch_size = 500
+step = 0
+print_per_step = 10
+
+for epoch in range(epochs):
+  for i in range(0, n, batch_size):
+    model.train()
+    X = data[i:i+batch_size, :, :]
+    y = model(X)[:, 2:, :]
+    label = targets[i:i+batch_size, 2:, :]
+    loss = criteria(label, y)
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+    if step % print_per_step == 0:
+      print(f"Epoch {epoch} loss {loss.item()}")
+    step += 1
+
+"""
+Issue of the original impl -> slow convergence
+"""
