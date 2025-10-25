@@ -79,3 +79,81 @@ NODE_REGISTRY = {}
 node = Node(0)
 NODE_REGISTRY["0"] = node
 node.sendAsyncMessage("0", "-1")
+
+
+
+
+
+NODE_REGISTRY: dict[str, "Node"] = {}
+
+class Node:
+
+    def __init__(self, node_id: str):
+        self.node_id = node_id
+        self.parent = None
+        self.children = []
+
+        self.buffer = {}
+
+    def add_parent(self, parent: str):
+        self.parent = parent
+
+    def add_child(self, child: str):
+        self.children.append(child)
+
+    def sendAsyncMessage(self, to_node_id: str, msg: str):
+        NODE_REGISTRY[to_node_id].receiveMessage(self.node_id, msg)
+
+    def receiveMessage(self, from_node_id: str, msg: str):
+        is_root = True if self.parent is None else False
+        is_leaf = True if len(self.children) == 0 else False
+
+        if is_root and is_leaf:
+            print(f"{self.node_id}")
+            return
+
+        msg_type = "MAP" if (not is_root and from_node_id == self.parent) or (is_root and from_node_id not in self.children) else "REDUCE"
+
+        if msg_type == "MAP":
+            if is_leaf:
+                self.sendAsyncMessage(self.parent, f"{self.node_id}")
+            else:
+                for child in self.children:
+                    self.sendAsyncMessage(child, "")
+
+        else:
+            self.buffer[from_node_id] = f"({msg})"
+
+            if len(self.buffer) == len(self.children):
+                graph = ",".join([self.node_id] + list(self.buffer.values()))
+                if is_root:
+                    # print topological graph
+                    print(graph) 
+                else:
+                    self.sendAsyncMessage(self.parent, graph)
+
+
+nodes = [Node(str(i)) for i in range(1, 7)]
+for node in nodes:
+    NODE_REGISTRY[node.node_id] = node
+
+nodes[0].add_child(nodes[1].node_id)
+nodes[1].add_parent(nodes[0].node_id)
+nodes[0].add_child(nodes[2].node_id)
+nodes[2].add_parent(nodes[0].node_id)
+
+nodes[1].add_child(nodes[3].node_id)
+nodes[1].add_child(nodes[4].node_id)
+nodes[3].add_parent(nodes[1].node_id)
+nodes[4].add_parent(nodes[1].node_id)
+
+nodes[2].add_child(nodes[5].node_id)
+nodes[5].add_parent(nodes[2].node_id)
+
+
+nodes[0].sendAsyncMessage("1", "")
+
+NODE_REGISTRY = {}
+node = Node(0)
+NODE_REGISTRY["0"] = node
+node.sendAsyncMessage("0", "")
