@@ -137,3 +137,87 @@ sql.insertRow("people", ["93", "Chris", "M"])
 print(sql.selectRows("people", ["name"], "sex", "F"))
 sql.deleteRows("people", "sex", "M")
 print(sql.selectRows("people", ["name"], "sex", "F"))
+
+
+
+from collections import defaultdict
+from typing import Optional
+
+
+class Table:
+
+    def __init__(self, columns: list[str]):
+        self.columns = columns
+        self.col_index = {}
+        for i, col in enumerate(columns):
+            self.col_index[col] = i
+        
+        self.rows = []
+        self.index = {} # dict[str, dict[str, list[int]]]
+        for col in self.columns:
+            self.index[col] = defaultdict(set)
+
+
+    def insert(self, row: list[str]):
+        row_index = len(self.rows)
+        self.rows.append(row)
+
+        for col, val in zip(self.columns, row):
+            self.index[col][val].add(row_index)
+        
+    def delete(self, whereCols: list[str], whereVals: list[str]):
+
+        row_indexs = self._select(whereCols, whereVals)
+        
+        for idx in row_indexs:
+            row = self.rows[idx]
+            self.rows[idx] = None
+            for col, val in zip(self.columns, row):
+                self.index[col][val].remove(idx)
+
+    def _select(self, whereCols: list[str], whereVals: list[str]) -> set[int]:
+        row_indexs = self.index[whereCols[0]][whereVals[0]]
+        for col, val in zip(whereCols[1:], whereVals[1:]):
+            row_indexs &= self.index[col][val]
+        return row_indexs
+
+    def select(self, whereCols: list[str], whereVals: list[str], orderBy: Optional[str] = None):
+
+        row_indexes = self._select(whereCols, whereVals)
+
+        rows = []
+        for idx in row_indexes:
+            rows.append(self.rows[idx])
+
+        if orderBy:
+            rows = sorted(rows, key = lambda x: x[self.col_index[orderBy]])
+
+        return rows    
+
+
+class SQL:
+
+    def __init__(self):
+        self.tables = {}
+
+    def create(self, tableName: str, columns: list[str]):
+        self.tables[tableName] = Table(columns)
+
+    def insert(self, tableName: str, row: list[str]):
+        self.tables[tableName].insert(row)
+
+    def delete(self, tableName: str, whereCols: list[str], whereVals: list[str]):
+        self.tables[tableName].delete(whereCols, whereVals)
+    
+    def select(self, tableName: str, whereCols: list[str], whereVals: list[str], orderBy: Optional[str] = None):
+        return self.tables[tableName].select(whereCols, whereVals, orderBy)
+
+
+sql = SQL()
+
+sql.create("people", ["name", "age", "sex", "score"])
+sql.insert("people", ["Allan", "30", "M", "95"])
+sql.insert("people", ["Chris", "35", "M", "90"])
+sql.insert("people", ["Hannah", "28", "F", "99"])
+sql.insert("people", ["Allan", "30", "M", "70"])
+print(sql.select("people", ["sex", "name"], ["F", "Chris"], "score"))
