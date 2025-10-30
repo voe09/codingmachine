@@ -157,3 +157,87 @@ NODE_REGISTRY = {}
 node = Node(0)
 NODE_REGISTRY["0"] = node
 node.sendAsyncMessage("0", "")
+
+
+
+from typing import Optional
+
+class TreeNode:
+
+    def __init__(self, node_id: str):
+        self.node_id = node_id
+        self.parent = None
+        self.children = None
+        self.buffer = []
+
+    def add_parent(self, node: "TreeNode"):
+        self.parent = node
+    
+    def add_children(self, children: list["TreeNode"]):
+        self.children = children
+        for child in self.children:
+            child.add_parent(self)
+        
+    def sendAsyncMessage(self, node: "TreeNode", msg: str):
+        node.receiveMessage(self, msg)
+
+    def receiveMessage(self, from_node: "TreeNode", msg: str):
+        if msg == "count":
+            if self.children is None:
+                if self.parent:
+                    self.sendAsyncMessage(self.parent, "countResponse:1")
+                else:
+                    print("TOTAL COUNT:1")
+            else:
+                for child in self.children:
+                    self.sendAsyncMessage(child, "count")
+
+        elif msg.startswith("countResponse"):
+            _, count = msg.split(":")
+            count = int(count)
+            self.buffer.append(count)
+
+            if len(self.buffer) == len(self.children):
+                count = sum(self.buffer) + 1
+                if self.parent:
+                    self.sendAsyncMessage(self.parent, f"countResponse:{count}")
+                    self.buffer.clear()
+                else:
+                    print(f"TOTAL COUNT:{count}")
+                    self.buffer.clear()
+
+        elif msg == "topology":
+            if self.children is None:
+                if self.parent:
+                    self.sendAsyncMessage(self.parent, f"topologyResponse:{self.node_id}")
+                else:
+                    print(f"TOPOLOGY: {self.node_id}")
+            else:
+                for child in self.children:
+                    self.sendAsyncMessage(child, "topology")
+        elif msg.startswith("topologyResponse"):
+            _, topo = msg.split(":")
+            self.buffer.append(topo)
+
+            if len(self.buffer) == len(self.children):
+                graph = f"({self.node_id}, ({','.join(self.buffer)}))"
+                if self.parent:
+                    self.sendAsyncMessage(self.parent, f"topologyResponse:{graph}")
+                    self.buffer.clear()
+                else:
+                    print(f"TOPOLOGY: {graph}")
+                    self.buffer.clear()
+
+
+
+
+root = TreeNode("1")
+root.sendAsyncMessage(root, "count")
+root.sendAsyncMessage(root, "topology")
+
+node1 = TreeNode("2")
+node1.add_children([TreeNode("4"), TreeNode("5")])
+root.add_children([node1, TreeNode("3")])
+
+root.sendAsyncMessage(root, "count")
+root.sendAsyncMessage(root, "topology")
