@@ -32,7 +32,7 @@ def max_subgrid_size(grid: list[list[int]], maxsum: int) -> int:
         return True
 
     # 4. Binary search for max k
-    left, right = 1, min(m, n)
+    left, right = 1, min(m, n) + 1
     while left < right:
         mid = left + (right - left) // 2 
         if valid(mid):
@@ -40,7 +40,7 @@ def max_subgrid_size(grid: list[list[int]], maxsum: int) -> int:
         else:
             right = mid
 
-    return left
+    return left - 1
 
 
 grid = [
@@ -48,6 +48,6 @@ grid = [
     [4, 5, 6],
     [7, 8, 9]
 ]
-maxsum = 100
-
-print(max_subgrid_size(grid, maxsum))
+print(max_subgrid_size(grid, 100))  # ✅ 3
+print(max_subgrid_size(grid, 40))   # ✅ 2
+print(max_subgrid_size(grid, 10))   # ✅ 1
