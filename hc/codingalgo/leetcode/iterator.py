@@ -140,3 +140,304 @@ def test_resumable_multi_list_iterator():
     # print(new_iterator.index)
 
 test_resumable_multi_list_iterator()
+
+
+
+
+
+
+
+
+from abc import ABC, abstractmethod
+
+
+class IteratorInterface(ABC):
+
+    @abstractmethod
+    def __iter__(self):
+        pass
+
+    @abstractmethod
+    def __next__(self):
+        pass
+
+    @abstractmethod
+    def get_state(self):
+        pass
+
+    @abstractmethod
+    def set_state(self, state):
+        pass
+
+
+class ListIterator(IteratorInterface):
+
+    def __init__(self, data: list[int]):
+        self.index = 0
+        self.data = data
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if self.index >= len(self.data):
+            raise StopIteration("No more element")
+        self.index += 1
+        return self.data[self.index - 1]
+
+    def get_state(self):
+        return self.index
+
+    def set_state(self, state):
+        self.index = state 
+        
+
+
+iterator = ListIterator((1, 2, 3))
+for i in range(2):
+    print(next(iter(iterator)))
+
+state = iterator.get_state()
+new_iterator = ListIterator((1, 2, 3))
+new_iterator.set_state(state)
+print(next(iter(new_iterator)))
+
+try:
+    print(next(iter(new_iterator)))
+except StopIteration:
+    print("no more data")
+
+
+class MultiListIterator(IteratorInterface):
+
+    def __init__(self, iters: list[ListIterator]):
+        self.index = 0
+        self.iters = iters
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while self.index < len(self.iters):
+            it = self.iters[self.index]
+            try:
+                value = next(iter(it))
+                return value
+            except StopIteration:
+                self.index += 1
+        raise StopIteration("no more data")
+
+    def get_state(self):
+        if self.index < len(self.iters):
+            return (self.index, self.iters[self.index].get_state())
+        
+        else:
+            return (self.index, -1)
+
+    def set_state(self, state):
+        self.index = state[0]
+        if self.index < len(self.iters):
+            self.iters[self.index].set_state(state[1])
+
+iterator = MultiListIterator([
+    ListIterator((1, 2, 3)),
+    ListIterator((4, 5)),
+    ListIterator(()),
+    ListIterator((6, 7)),
+])
+
+for i in range(5):
+    print(next(iter(iterator)))
+
+state = iterator.get_state()
+
+new_iterator = MultiListIterator([
+    ListIterator((1, 2, 3)),
+    ListIterator((4, 5)),
+    ListIterator(()),
+    ListIterator((6, 7)),
+])
+
+new_iterator.set_state(state)
+for i in range(2):
+    print(next(iter(new_iterator)))
+
+try:
+    next(iter(new_iterator))
+except StopIteration:
+    print("no more data")
+
+
+from abc import ABC, abstractmethod
+from collections.abc import Iterator
+
+
+class IteratorInterface(ABC):
+
+    @abstractmethod
+    def __iter__(self):
+        pass
+
+    @abstractmethod
+    def __next__(self):
+        pass
+
+    @abstractmethod
+    def get_state(self):
+        pass
+
+    @abstractmethod
+    def set_state(self, state):
+        pass
+
+
+class ListIterator(IteratorInterface):
+
+    def __init__(self, data: list[int]):
+        self.index = 0
+        self.data = data
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if self.index >= len(self.data):
+            raise StopIteration("No more element")
+        self.index += 1
+        return self.data[self.index - 1]
+
+    def get_state(self):
+        return self.index
+
+    def set_state(self, state):
+        self.index = state 
+        
+
+
+iterator = ListIterator((1, 2, 3))
+for i in range(2):
+    print(next(iter(iterator)))
+
+state = iterator.get_state()
+new_iterator = ListIterator((1, 2, 3))
+new_iterator.set_state(state)
+print(next(iter(new_iterator)))
+
+try:
+    print(next(iter(new_iterator)))
+except StopIteration:
+    print("no more data")
+
+
+class MultiListIterator(IteratorInterface):
+
+    def __init__(self, iters: list[ListIterator]):
+        self.index = 0
+        self.iters = iters
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while self.index < len(self.iters):
+            it = self.iters[self.index]
+            try:
+                value = next(iter(it))
+                return value
+            except StopIteration:
+                self.index += 1
+        raise StopIteration("no more data")
+
+    def get_state(self):
+        if self.index < len(self.iters):
+            return (self.index, self.iters[self.index].get_state())
+        
+        else:
+            return (self.index, -1)
+
+    def set_state(self, state):
+        self.index = state[0]
+        if self.index < len(self.iters):
+            self.iters[self.index].set_state(state[1])
+
+iterator = MultiListIterator([
+    ListIterator((1, 2, 3)),
+    ListIterator((4, 5)),
+    ListIterator(()),
+    ListIterator((6, 7)),
+])
+
+for i in range(5):
+    print(next(iter(iterator)))
+
+state = iterator.get_state()
+
+new_iterator = MultiListIterator([
+    ListIterator((1, 2, 3)),
+    ListIterator((4, 5)),
+    ListIterator(()),
+    ListIterator((6, 7)),
+])
+
+new_iterator.set_state(state)
+for i in range(2):
+    print(next(iter(new_iterator)))
+
+try:
+    next(iter(new_iterator))
+except StopIteration:
+    print("no more data")
+
+
+class JsonFileIterator(Iterator):
+
+    def __init__(self, filepath):
+        self.filepath = filepath
+        self.file = open(filepath, 'r')
+        self.offset = self.offset
+    
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.file.seek(self.offset)
+        line = self.file.readline()
+        if not line:
+            raise StopIteration
+        self.offset = self.file.tell()
+
+    def get_state(self):
+        return self.offset
+    
+    def set_state(self, state):
+        self.offset = state
+
+class MultiJsonFileIterator(Iterator):
+
+    def __init__(self, json_files: list[str]):
+        self.index = 0
+        self.json_iterators = [JsonFileIterator(f) for f in json_files]
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while self.index < len(self.json_iterators):
+            it = self.json_iterators[self.index]
+            try:
+                line = next(iter(it))
+                return line
+            except:
+                self.index += 1
+        raise StopIteration
+
+    def get_state(self):
+        if self.index < len(self.json_iterators):
+            return (self.index, self.json_iterators[self.index].get_state())
+    
+        return (self.index, -1)
+
+    def set_state(self, state):
+        self.index = state[0]
+        if self.index < len(self.json_iterators):
+            self.json_iterators[self.index].set_state(state[1])
