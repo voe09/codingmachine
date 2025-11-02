@@ -252,3 +252,125 @@ print(spreadsheet.get_cell("A3"))
 print(spreadsheet.get_cell("A4"))
 print(spreadsheet.get_cell("A5"))
 spreadsheet.set_cell("A1", "=A5+A1")
+
+
+
+
+
+
+
+
+
+
+
+
+from typing import Optional
+
+
+class Cell:
+
+    def __init__(self, key: str, value: Optional[int] = None):
+        self.key = key
+        self.value = value
+        self.resolved_value = None
+        self.parents = set()
+        self.children = set()
+
+    def add_parent(self, node: "Cell"):
+        self.parents.add(node)
+        node.children.add(self)
+
+    def remove_parent(self, node: "Cell"):
+        self.parents.remove(node)
+        node.children.remove(self)
+
+    def resolve(self):
+        # resolve value from parents
+        if self.value is None:
+            value = None if any(p.resolved_value is None for p in self.parents) else sum(p.resolved_value for p in self.parents)
+            self.resolved_value = value
+        else:
+            self.resolved_value = self.value
+
+        for child in self.children:
+            child.resolve()
+
+    def validate(self, visited: set):
+        for p in self.parents:
+            if p in visited:
+                raise ValueError("Circle Detected")
+            visited.add(p)
+            p.validate(visited)
+            visited.remove(p)
+
+    def __repr__(self) -> str:
+        return f"{self.key}"
+
+class SpreadSheet:
+
+    def __init__(self):
+        self.cells = {}
+    
+    def set_cell(
+        self, 
+        key: str, 
+        value: Optional[int] = None, 
+        child1: Optional[str] = None, 
+        child2: Optional[str] = None,
+    ):
+        if child1 is not None and child1 not in self.cells:
+            self.cells[child1] = Cell(child1)
+        if child2 is not None and child2 not in self.cells:
+            self.cells[child2] = Cell(child2)
+
+        if key not in self.cells:
+            cell = Cell(key, value)
+            self.cells[key] = cell
+            if child1 is not None:
+                cell.add_parent(self.cells[child1])
+                cell.add_parent(self.cells[child2])
+        else:
+            origin_cell = self.cells[key]
+
+            for p in list(origin_cell.parents):
+                    origin_cell.remove_parent(p)
+
+            origin_cell.value = None
+
+            if value is not None:
+                origin_cell.value = value
+            else:
+                origin_cell.add_parent(self.cells[child1])
+                origin_cell.add_parent(self.cells[child2])
+        
+        visited = set([self.cells[key]])
+        self.cells[key].validate(visited)
+
+        self.cells[key].resolve()
+
+    def get_cell(self, key: str):
+        if key not in self.cells:
+            return -1
+        return self.cells[key].resolved_value
+
+
+
+sheet = SpreadSheet()
+sheet.set_cell("A", 1)
+sheet.set_cell("B", 2)
+sheet.set_cell("C", child1="A", child2="B")
+print(sheet.get_cell("A"))
+print(sheet.get_cell("B"))
+print(sheet.get_cell("C"))
+sheet.set_cell("D", child1="A", child2="C")
+print(sheet.get_cell("D"))
+sheet.set_cell("C", 10)
+print(sheet.get_cell("A"))
+print(sheet.get_cell("B"))
+print(sheet.get_cell("C"))
+print(sheet.get_cell("D")) # D is not correctly updated
+
+print(sheet.cells)
+for cell in sheet.cells:
+    print(f"node: {sheet.cells[cell]}, its parents: {sheet.cells[cell].parents}")
+sheet.set_cell("A", child1="C", child2="B")
