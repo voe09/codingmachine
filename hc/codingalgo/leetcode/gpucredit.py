@@ -133,3 +133,77 @@ assert credits.get_balance(10) == 3
 assert credits.get_balance(20) == 5
 assert credits.get_balance(30) == 1
 assert credits.get_balance(70) == 1
+
+
+import unittest
+
+from heapq import heappush, heappop
+
+class GPUCredit:
+
+    def __init__(self):
+        self.credits = []
+        self.subs = []
+
+    def transaction(self, id: str, amount: int, start_ts: int, end_ts: int):
+        self.credits.append([id, amount, start_ts, end_ts])
+
+    def substract(self, amount: int, ts: int):
+        self.subs.append([amount, ts])
+
+    def get_balance(self, ts: int):
+        # get all credits and subs whose start ts is <= ts
+        credits = [list(c) for c in self.credits if c[2] <= ts]
+        subs = [list(s) for s in self.subs if s[1] <= ts]
+
+        # keep a priority queue, expired first credits will be the top
+        heap = []
+        i = 0
+        for amount, sub_ts in subs:
+            while i < len(credits) and credits[i][2] <= sub_ts:
+                _, credit, _, end_ts = credits[i]
+                heappush(heap, (end_ts, credit))
+                i += 1
+    
+            while len(heap) > 0 and heap[0][0] <= sub_ts:
+                heappop(heap) # remove credit whose expiration_ts <= sub_ts
+
+            while len(heap) > 0 and amount > 0:
+                end_ts, credit = heappop(heap)
+                if credit <= amount:
+                    amount -= credit
+                    credit = 0
+                else:
+                    credit -= amount
+                    amount = 0
+                    heappush(heap, (end_ts, credit))
+            
+        
+        while i < len(credits):
+            heappush(heap, (credits[i][3], credits[i][1]))
+            i += 1
+
+        while len(heap) > 0 and heap[0][0] <= ts:
+            heappop(heap)
+
+        balance = 0
+        for _, credit in heap:
+            balance += credit
+        
+        return balance
+
+
+
+class TestGPUCredit(unittest.TestCase):
+
+    def test_get_balance(self):
+        credit = GPUCredit()
+        credit.transaction("A", 10, 0, 10)
+        credit.transaction("B", 10, 0, 100)
+        self.assertEqual(credit.get_balance(5), 20)
+        credit.substract(9, 9)
+        self.assertEqual(credit.get_balance(9), 11)
+        self.assertEqual(credit.get_balance(10), 10)
+
+
+unittest.main()
