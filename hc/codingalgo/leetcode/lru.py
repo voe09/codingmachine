@@ -104,3 +104,86 @@ print(lru.get_max_count()) # 2, #a: 2, c:1
 lru.add_key("d")
 print(lru.get_count_by_key("c")) # -1
 print(lru.heap)
+
+
+import unittest
+
+class Node:
+
+    def __init__(self, key: str, value: int):
+        self.key = key
+        self.value = value
+        self.prev = None
+        self.next = None
+
+
+class LRU:
+
+    def __init__(self, cap: int):
+        self.cap = cap
+        self.cache: dict[str, Node] = {}
+        self.first = Node("", -1)
+        self.last = Node("", -1)
+        self.first.next = self.last
+        self.last.prev = self.first
+
+    def add(self, key: str):
+        if key in self.cache:
+            node = self.cache[key]
+            node.value += 1
+            self._delete_node(node)
+            self._insert_node(self.first, node)
+        
+        else:
+            if len(self.cache) >= self.cap:
+                # pop the least used
+                node_to_delete = self.last.prev
+                self._delete_node(node_to_delete)
+                del self.cache[node_to_delete.key]
+            
+            node = Node(key, 1)
+            self._insert_node(self.first, node)
+            self.cache[key] = node
+
+
+    def get_count(self, key: str) -> int:
+        if key not in self.cache:
+            return -1
+
+        node = self.cache[key]
+        self._delete_node(node)
+        self._insert_node(self.first, node)
+        return node.value
+    
+    def _delete_node(self, node: Node):
+        prev, next = node.prev, node.next
+        prev.next = next
+        next.prev = prev
+    
+    def _insert_node(self, prev: Node, node: Node):
+        next = prev.next
+        prev.next = node
+        node.next = next
+        next.prev = node
+        node.prev = prev
+
+
+
+class TestLRU(unittest.TestCase):
+
+    def test_lru(self):
+        cache = LRU(2)
+        self.assertEqual(-1, cache.get_count("foo"))
+
+        cache.add("foo0") # (foo: 1)
+        cache.add("foo1") # (foo1: 1), (foo0: 1)
+        self.assertEqual(1, cache.get_count("foo0")) # (foo0: 1), (foo1: 1)
+        cache.add("foo2") # (foo2: 1), (foo0: 1)
+        self.assertEqual(-1, cache.get_count("foo1"))
+        cache.add("foo0")
+        self.assertEqual(2, cache.get_count("foo0"))
+
+
+unittest.main(verbosity=2)
+
+    
