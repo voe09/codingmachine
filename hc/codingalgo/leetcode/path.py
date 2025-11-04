@@ -113,3 +113,52 @@ def cd(curr: str, new: str, links: dict[str, str]) -> str:
 
 
 print(cd("/foo/bar", "baz", {"/foo/bar": "/abc", "/foo/bar/baz": "/xyz"}))
+
+
+
+
+import unittest
+
+def simplify(path: str) -> str:
+    stack = []
+    path = path.split('/')
+    for token in path:
+        if token == ".":
+            continue
+        elif token == "":
+            continue
+        elif token == "..":
+            if len(stack) > 0:
+                stack.pop()
+        else:
+            stack.append(token)
+    return "/" + "/".join(stack)
+
+def cd(curr: str, path: str) -> str:
+    if path.startswith('/'):
+        return simplify(path)
+    else:
+        return simplify(curr + "/" + path)
+
+
+
+class TestCD(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.root = "/home/usr"
+
+    def test_abs_path(self):
+        self.assertEqual("/home/sys/fold1", cd(self.root, "/home/sys/fold1"))
+    
+    def test_relative_path(self):
+        self.assertEqual("/home/usr/haoy/testfolder", cd(self.root, "haoy/testfolder"))
+
+        self.assertEqual("/home/usr/haoyc", cd(self.root, "./haoyc"))
+
+        self.assertEqual("/home/haoyc", cd(self.root, "../haoyc"))
+
+        self.assertEqual("/home/usr/haoyc", cd(self.root, "haoyc"))
+
+        self.assertEqual("/haoyc", cd(self.root, "../..//haoyc"))
+
+unittest.main()
