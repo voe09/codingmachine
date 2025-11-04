@@ -114,3 +114,164 @@ print(str(func))
 
 output = get_return_type([arg1, arg2], func)
 print(output)
+
+
+
+import unittest
+
+from typing import Optional
+from unittest.loader import VALID_MODULE_NAME
+
+class Node:
+
+    def __init__(
+        self, 
+        value: Optional[str] = None, 
+        children: Optional[list["Node"]] = None,
+    ):
+        self.value = value
+        self.children = children
+
+    def is_nested(self):
+        return self.children is not None and len(self.children) > 0
+    
+    def is_primitive(self):
+        return self.value is not None and self.value in ["char", "int", "float"]
+
+    def to_str(self):
+        if self.value is not None:
+            return self.value
+        
+        else:
+            return f"[{','.join([c.to_str() for c in self.children])}]"
+
+    def resolve(self, mapping: dict[str, str]) -> "Node":
+        new_node = Node()
+        if self.is_nested():
+            new_node.children = []
+            for child in self.children:
+                new_node.children.append(child.resolve(mapping))
+        else:
+            if self.is_primitive():
+                new_node.value = self.value
+            else:
+                generic_type = self.value
+                if generic_type not in mapping:
+                    raise ValueError(f"{self.to_str()} is not resolveable, func signature is incorrect")
+                else:
+                    new_node.value = mapping[generic_type]
+        
+        return new_node
+
+class Function:
+
+    def __init__(self, args: list[Node], output: Node):
+        self.args = args
+        self.output = output
+
+    def to_str(self):
+        return f"[{','.join([arg.to_str() for arg in self.args])}] -> {self.output.to_str()}"
+
+    def resolve(self, params: list[Node]) -> Node:
+        if len(self.args) != len(params):
+            raise ValueError("input params length does not match function signature")
+
+        mapping: dict[str, str] = {}
+
+        for arg, param in zip(self.args, params):
+            helper(arg, param, mapping)
+        
+        return self.output.resolve(mapping)
+
+def helper(a: Node, b: Node, mapping: dict[str, str]):
+    if a.is_nested() != b.is_nested():
+        raise ValueError(f"type mismatch for {a.to_str()} and {b.to_str()}")
+
+    if a.is_nested():
+        if len(a.children) != len(b.children):
+            raise ValueError(f"type mismatch for {a.to_str()} and {b.to_str()}")
+        for child1, child2 in zip(a.children, b.children):
+            helper(child1, child2, mapping)
+        
+    else:
+        if not a.is_primitive():
+            generic_type = a.value
+            primitive_type = b.value
+            if generic_type in mapping:
+                if mapping[generic_type] != primitive_type:
+                    raise ValueError(f"generic type mismatch, {generic_type} maps to both {primitive_type} and {mapping[generic_type]}")
+            else:
+                mapping[generic_type] = primitive_type
+        else:
+            if a.value != b.value:
+                raise ValueError(f"type mismatch for {a.to_str()} and {b.to_str()}")
+
+
+class TestToStr(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.node1 = Node("T1")
+        self.node2 = Node("char")
+        self.node3 = Node(children=[self.node1, self.node2])
+        self.node4 = Node(children=[self.node1, self.node3])
+
+    def test_node_to_str(self):
+        self.assertEqual("T1", self.node1.to_str())
+        self.assertEqual("[T1,char]", self.node3.to_str())
+        self.assertEqual("[T1,[T1,char]]", self.node4.to_str())
+
+    def test_function_to_str(self):
+        function1 = Function([self.node2, self.node4], self.node1)
+        self.assertEqual("[char,[T1,[T1,char]]] -> T1", function1.to_str())
+
+        function2 = Function([self.node1, self.node3], self.node4)
+        self.assertEqual("[T1,[T1,char]] -> [T1,[T1,char]]", function2.to_str())
+
+
+class TestFunctionResolve(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.node1 = Node("T1")
+        self.node2 = Node("char")
+        self.node3 = Node(children=[self.node1, self.node2]) # T1,char
+        self.node4 = Node(children=[self.node1, self.node3])
+
+        self.node5 = Node("int") # map to node 1
+        self.node6 = Node(children=[self.node5, self.node2]) # map to node 3
+        self.node7 = Node(children=[self.node5, self.node6]) # map to node 4
+
+        self.node8 = Node(children=[self.node5, self.node5, self.node2]) # error mapping for node3 len mismatch
+
+        self.node9 = Node(children = [self.node2, self.node2]) # T1 match char
+
+    def test_function_resolve_the_type(self):
+        # function has 3 args: one generic type, one primitive type and one nested type
+        function = Function([self.node1, self.node2, self.node4], self.node3)
+        output_type = function.resolve([self.node5, self.node2, self.node7])
+        self.assertEqual("[int,char]", output_type.to_str())
+
+    def test_param_len_mismatch(self):
+        function = Function([self.node1, self.node2], self.node3)
+        with self.assertRaises(ValueError) as ve:
+            function.resolve([self.node5])
+        print(ve.exception)
+    
+    def test_param_children_len_mismatch(self):
+        function = Function([self.node1, self.node3], self.node3)
+        with self.assertRaises(ValueError) as ve:
+            function.resolve([self.node1, self.node8])
+        print(ve.exception)
+
+    def test_primitive_type_mismatch(self):
+        function = Function([self.node2, self.node3], self.node3)
+        with self.assertRaises(ValueError) as ve:
+            function.resolve([self.node5, self.node6])
+        print(ve.exception)
+
+    def test_generic_type_multi_match(self):
+        function = Function([self.node1, self.node3], self.node3)
+        with self.assertRaises(ValueError) as ve:
+            function.resolve([self.node5, self.node9])
+        print(ve.exception)
+
+unittest.main(verbosity=2)
