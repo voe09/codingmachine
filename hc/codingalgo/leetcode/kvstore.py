@@ -368,3 +368,141 @@ print(state)
 
 new_cache = KVCache.load(state)
 print(new_cache.cache)
+
+
+import unittest
+import threading
+
+from typing import Optional
+from abc import ABC, abstractmethod
+
+class KeyValueStore(ABC):
+    @abstractmethod
+    def put(self, key: str, value: str) -> int:
+        """Inserts a new value for the given key and returns the version number."""
+        pass
+
+    @abstractmethod
+    def get(self, key: str, version: Optional[int] = -1) -> Optional[str]:
+        """Retrieves the value associated with the key at the given version.
+        If version is -1, return the latest value."""
+        pass
+
+class VersionKVStore(KeyValueStore):
+
+    def __init__(self):
+        self.store: dict[str, dict[int, str]] = {}
+
+    def put(self, key: str, value: str) -> int:
+        if key not in self.store:
+            self.store[key] = {0: value}
+            return 0
+        else:
+            latest_version = len(self.store[key])
+            self.store[key][latest_version] = value
+            return latest_version
+
+    def get(self, key:str, version: Optional[int] = -1) -> Optional[str]:
+        if key not in self.store:
+            return None
+        
+        else:
+            versioned_values = self.store[key]
+            if version is not None and version != -1:
+                if version not in versioned_values:
+                    return None
+                else:
+                    return versioned_values[version]
+            else:
+                return versioned_values[len(versioned_values) - 1]
+            
+
+class ThreadsafeVersionKVStore(KeyValueStore):
+
+    def __init__(self):
+        self.store: dict[str, dict[int, str]] = {}
+        self.locks: dict[str, threading.Lock] = {}
+        self.global_lock = threading.Lock()
+
+    def put(self, key: str, value: str) -> int:
+        with self.global_lock:
+            if key not in self.locks:
+                self.locks[key] = threading.Lock()
+            key_lock = self.locks[key]
+
+        with key_lock:
+            if key not in self.store:
+                self.store[key] = {0: value}
+                return 0
+            else:
+                latest_version = len(self.store[key])
+                self.store[key][latest_version] = value
+                return latest_version
+
+    def get(self, key:str, version: Optional[int] = -1) -> Optional[str]:
+        with self.global_lock:
+            if key not in self.locks:
+                return None
+            key_lock = self.locks[key]
+        
+        with key_lock:
+            versioned_values = self.store[key]
+            if version is not None and version != -1:
+                if version not in versioned_values:
+                    return None
+                else:
+                    return versioned_values[version]
+            else:
+                return versioned_values[len(versioned_values) - 1]
+
+class TestVersionedKVStore(unittest.TestCase):
+
+    def setUp(self):
+        self.cache = VersionKVStore()
+
+    def test_put_and_get(self):
+        self.cache.put("foo", "bar0")
+        self.cache.put("foo", "bar1")
+        self.cache.put("foo", "bar2")
+        self.assertEqual(1, len(self.cache.store))
+        self.assertEqual(3, len(self.cache.store["foo"]))
+        self.cache.put("notfoo", "bar")
+        self.assertEqual(2, len(self.cache.store))
+
+        self.assertIsNone(self.cache.get("not a key"))
+        self.assertIsNone(self.cache.get("foo", 3))
+        self.assertEqual("bar1", self.cache.get("foo", 1))
+        self.assertEqual("bar2", self.cache.get("foo", -1))
+
+
+class TestThreadsafeVersionedKVStore(unittest.TestCase):
+    
+    def setUp(self) -> None:
+        self.cache = ThreadsafeVersionKVStore()
+
+    def test_put_and_get_threadsafe(self):
+        jobs = []
+        for i in range(100):
+            job = threading.Thread(target=self.cache.put, args=("foo", f"bar{i}",))
+            jobs.append(job)
+
+        def get(key: str, version: int):
+            v = self.cache.get(key, version)
+            print(v)
+
+        for i in range(100):
+            job = threading.Thread(target=get, args=("foo", i))
+            jobs.append(job)
+
+        for job in jobs:
+            job.start()
+
+        done = [job.join() for job in jobs]
+
+        print(done)
+
+
+
+unittest.main(verbosity=2)
+
+    
