@@ -441,3 +441,248 @@ class MultiJsonFileIterator(Iterator):
         self.index = state[0]
         if self.index < len(self.json_iterators):
             self.json_iterators[self.index].set_state(state[1])
+
+
+
+
+
+
+
+import unittest
+
+from abc import ABC, abstractmethod
+from collections.abc import Iterable
+from typing import TypeVar, Generic, Iterator, Any
+
+class IteratorInterface(ABC):
+
+    @abstractmethod
+    def __iter__(self):
+        pass
+    
+    @abstractmethod
+    def __next__(self):
+        pass
+
+    @abstractmethod
+    def get_state(self):
+        pass
+
+    @abstractmethod
+    def set_state(self, state):
+        pass
+
+T = TypeVar("T")
+
+class ResumableIterator(IteratorInterface, Generic[T]):
+    """Templatized iterator supporting suspension/resumption over any iterable."""
+
+    def __init__(self, iterable: Iterable[T]):
+        self.source = iter(iterable)
+        self.pos = 0
+        self.stop = False
+
+    def __iter__(self) -> Iterator[T]:
+        return self
+
+    def __next__(self) -> T:
+        # If we've already seen this item, return from buffer
+        if self.stop:
+            raise StopIteration
+        try:
+            value = next(self.source)
+            self.pos += 1
+            return value
+        except StopIteration as err:
+            self.stop = True
+            raise err
+
+    def get_state(self):
+        """Return a serializable snapshot of iteration progress."""
+        return (self.pos, self.stop)
+
+    def set_state(self, state):
+        """Restore iteration progress."""
+        self.pos = state[0]
+        self.stop = state[1]
+        if not self.stop:
+            for _ in range(self.pos):
+                next(self.source)
+
+
+
+class MultipleResumableIterator(IteratorInterface, Generic[T]):
+
+    def __init__(self, iterator: Iterable[ResumableIterator[T]]):
+        self.sources = iterator
+        self.iter = None
+        self.pos = 0
+        self.stop = False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.stop:
+            raise StopIteration
+        
+        while True:
+            if self.iter is None:
+                try:
+                    self.iter = next(self.sources)
+                    self.pos += 1
+                except StopIteration:
+                    self.stop = True
+                    raise StopIteration
+
+            try:
+                value = next(self.iter)
+                return value
+            except StopIteration:
+                self.iter = None
+    
+    def get_state(self):
+        if self.stop:
+            return {
+                "stop": self.stop,
+                "pos": self.pos,
+            }
+        else:
+            return {
+                "stop": self.stop,
+                "pos": self.pos,
+                "iter": None if self.iter is None else self.iter.get_state(),
+            }
+
+    def set_state(self, state):
+        stop = state["stop"]
+        if stop:
+            self.stop = stop
+            self.pos = state["pos"]
+        else:
+            self.stop = stop
+            self.pos = state["pos"]
+            iterator = None
+            for _ in range(self.pos):
+                iterator = next(self.sources)
+            self.iter = iterator
+            if iterator is not None:
+                self.iter.set_state(state["iter"])
+
+
+class TestIterator(unittest.TestCase):
+
+    def setUp(self):
+        def data_stream():
+            for x in range(5):
+                print(f"Producing {x}")
+                yield x
+        self.data = data_stream
+
+    def test_iterator_loop(self):
+        iterator = ResumableIterator(self.data())
+        for i in range(5):
+            next_value = next(iter(iterator))
+            self.assertEqual([0, 1, 2, 3, 4][i], next_value)
+
+        with self.assertRaises(StopIteration):
+            next(iter(iterator))
+        
+        self.assertTrue(iterator.stop)
+
+    def test_get_state_and_set_state(self):
+        states = []
+        expected_value = []
+        iterator = ResumableIterator(self.data())
+        for i in range(5):
+            state = iterator.get_state()
+            states.append(state)
+            expected_value.append(next(iter(iterator)))
+        
+        with self.assertRaises(StopIteration):
+            next(iter(iterator))
+        
+        states.append(iterator.get_state())
+
+        values = []
+        for state in states[:-1]:
+            new_iterator = ResumableIterator(self.data())
+            new_iterator.set_state(state)
+            values.append(next(iter(new_iterator)))
+        self.assertEqual(expected_value, values)
+
+        new_iterator = ResumableIterator(self.data())
+        new_iterator.set_state(states[-1])
+        with self.assertRaises(StopIteration):
+            next(iter(new_iterator))
+        
+
+class TestMultipleResumableIterator(unittest.TestCase):
+
+    def setUp(self):
+        # Simulate multiple "JSON files" as lists
+        self.file_data = [
+            [1, 2, 3],       # File 1
+            ["a", "b"],      # File 2
+            [True, False]    # File 3
+        ]
+        # Wrap each list in a ResumableIterator
+        self.iterators = [ResumableIterator(data) for data in self.file_data]
+
+    def test_iterator_loop(self):
+        # Create MultipleResumableIterator
+        multi_iter = MultipleResumableIterator(iter(self.iterators))
+        
+        # Expected flattened sequence
+        expected = [1, 2, 3, "a", "b", True, False]
+        output = []
+        for item in multi_iter:
+            output.append(item)
+        
+        self.assertEqual(output, expected)
+        self.assertTrue(multi_iter.stop)
+
+    def test_get_state_and_set_state(self):
+        # Create MultipleResumableIterator
+        multi_iter = MultipleResumableIterator(iter(self.iterators))
+        states = []
+        values = []
+
+        # Consume items one by one, save state before each
+        for _ in range(3):
+            state = multi_iter.get_state()
+            states.append(state)
+            values.append(next(multi_iter))  # consume item
+
+        # Save state in the middle
+        mid_state = multi_iter.get_state()
+
+        # Consume rest
+        while True:
+            try:
+                values.append(next(multi_iter))
+            except StopIteration:
+                break
+
+        # Test resuming from intermediate states
+        for idx, state in enumerate(states):
+            # Create fresh iterators for resumption
+            iterators_copy = [ResumableIterator(data) for data in self.file_data]
+            multi_iter_resume = MultipleResumableIterator(iter(iterators_copy))
+            multi_iter_resume.set_state(state)
+            resumed_value = next(multi_iter_resume)
+            self.assertEqual(resumed_value, values[idx])
+
+        # Test resuming from "end" state
+        iterators_copy = [ResumableIterator(data) for data in self.file_data]
+        multi_iter_resume = MultipleResumableIterator(iter(iterators_copy))
+        multi_iter_resume.set_state(mid_state)
+        resumed_values = [next(multi_iter_resume) for _ in range(len(values) - 3)]
+        self.assertEqual(resumed_values, values[3:])
+
+        # Ensure StopIteration is raised at the end
+        with self.assertRaises(StopIteration):
+            next(multi_iter_resume)
+
+
+unittest.main(verbosity=2)
