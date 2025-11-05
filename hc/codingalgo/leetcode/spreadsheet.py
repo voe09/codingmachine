@@ -374,3 +374,142 @@ print(sheet.cells)
 for cell in sheet.cells:
     print(f"node: {sheet.cells[cell]}, its parents: {sheet.cells[cell].parents}")
 sheet.set_cell("A", child1="C", child2="B")
+
+
+
+
+
+import unittest
+
+from typing import Optional
+
+
+class Node:
+
+    def __init__(self, key: str, value: Optional[int] = None):
+        self.key = key
+        self.value = value
+        self.children = set()
+        self.parent = set()
+        self.resolved_value = None
+    
+    def add(self, child: "Node"):
+        self.children.add(child)
+        child.parent.add(self)
+
+    def remove(self, child: "Node"):
+        self.children.remove(child)
+        child.parent.remove(self)
+    
+    def invalidate(self):
+        if self.resolved_value is not None:
+            self.resolved_value = None
+            for p in self.parent:
+                p.invalidate()
+
+    def validate(self, visited: set["Node"]) -> bool:
+        if not self.children:
+            return True
+        
+        for child in self.children:
+            if child in visited:
+                return False
+            visited.add(child)
+            child.validate(visited)
+            visited.remove(child)
+        
+        return True
+
+    def getValue(self):
+        if self.value:
+            return self.value
+        elif self.resolved_value:
+            return self.resolved_value
+        else:
+            resolved_value = sum(child.getValue() for child in self.children)
+            self.resolved_value = resolved_value
+            return resolved_value
+
+    
+class Spreadsheet:
+
+    def __init__(self):
+        self.cells = {}
+
+    def setCell(
+        self, 
+        key: str, 
+        value: Optional[int] = None, 
+        child1: Optional[str] = None, 
+        child2: Optional[str] = None,
+    ):
+        if child1 is not None:
+            self.cells[child1] = Node(child1)
+        if child2 is not None:
+            self.cells[child2] = Node(child2)
+        if key not in self.cells:
+            cell = Node(key, value)
+            if child1:
+                cell.add(self.cells[child1])
+                cell.add(self.cells[child2])
+            self.cells[key] = cell
+        else:
+            cell = self.cells[key]
+            # remove the original child
+            for child in list(cell.children):
+                cell.remove(child)
+            cell.invalidate() # invalidate cache
+            cell.value = value
+            if child1:
+                cell.add(self.cells[child1])
+                cell.add(self.cells[child2])
+            
+        visited = set([self.cells[key]])
+        if not self.cells[key].validate(visited):
+            raise IndexError("circle detected")
+
+    def getCell(self, key: str) -> Optional[int]:
+        if key not in self.cells:
+            return None
+        else:
+            return self.cells[key].getValue()
+
+
+
+class TestSpreadsheet(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.sheet = Spreadsheet()
+    
+    def set_cell_and_get_cell(self):
+        self.sheet.setCell("A1", 100)
+        self.sheet.setCell("B1", 200)
+        self.sheet.setCell("C1", None, "A1", "B1")
+
+        self.assertEqual(100, self.sheet.getCell("A1"))
+        self.assertEqual(200, self.sheet.getCell("B1"))
+        self.assertEqual(300, self.sheet.getCell("C1"))
+
+        self.assertIsNone(self.sheet.getCell("Not a key"))
+
+    
+    def set_cell_and_reset_cell(self):
+        self.sheet.setCell("C1", None, "A1", "B1")
+        self.sheet.setCell("A1", 100)
+        self.sheet.setCell("B1", 200)
+        self.assertEqual(300, self.sheet.getCell("C1"))
+        self.sheet.setCell("D1", None, "C1", "A1")
+        self.assertEqual(400, self.sheet.getCell("D1"))
+
+        self.sheet.setCell("C1", None, "A2", "B1")
+        self.sheet.setCell("A2", 500)
+        self.assertEqual(700, self.sheet.getCell("C1"))
+        self.assertEqual(800, self.sheet.getCell("D1"))
+
+    def circle(self):
+        self.sheet.setCell("A1", None, "B1", "C1")
+        self.sheet.setCell("B1", 100)
+        with self.assertRaises(IndexError):
+            self.sheet.setCell("C1", None, "A1", "B1")
+
+unittest.main(verbosity=2)
