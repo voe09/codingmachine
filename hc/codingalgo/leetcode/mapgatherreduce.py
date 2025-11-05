@@ -241,3 +241,102 @@ root.add_children([node1, TreeNode("3")])
 
 root.sendAsyncMessage(root, "count")
 root.sendAsyncMessage(root, "topology")
+
+
+import unittest
+
+from typing import Optional
+
+
+NODE_REGISTRY = {}
+
+class Node:
+
+    def __init__(self, node_id: str, children: Optional[list["Node"]] = None, parent: Optional["Node"] = None):
+        self.node_id = node_id
+        self.children = [] if children is None else children
+        self.parent = parent
+        self.buffer = {}
+
+    def sendAsyncMessage(self, to_node_id: str, msg: str):
+        NODE_REGISTRY.get(to_node_id).receiveAsyncMessage(self.node_id, msg)
+
+    def receiveAsyncMessage(self, from_node_id: str, msg: str):
+        if msg == "COUNT":
+            if not self.children: # leaf node
+                if not self.parent: # single root tree
+                    print("TOTAL COUNT: 1")
+                else:
+                    self.sendAsyncMessage(self.parent.node_id, "COUNT RESPONSE:1")
+            else:
+                for child in self.children:
+                    self.sendAsyncMessage(child.node_id, "COUNT")
+
+        elif msg.startswith("COUNT RESPONSE"):
+            count = int(msg.split(":")[1])
+            self.buffer[from_node_id] = count
+
+            if len(self.buffer) == len(self.children):
+                total_count = sum(self.buffer.values()) + 1
+                if self.parent:
+                    self.sendAsyncMessage(self.parent.node_id, f"COUNT RESPONSE:{total_count}")
+                else: # root
+                    print(f"TOTAL COUNT: {total_count}")
+                self.buffer.clear()
+
+        elif msg == "TOPOLOGY":
+            if not self.children: # leaf
+                if not self.parent: # single root
+                    print(f"{self.node_id}")
+                else:
+                    self.sendAsyncMessage(self.parent.node_id, f"TOPOLOGY RESPONSE:{self.node_id}")
+            else:
+                for child in self.children:
+                    self.sendAsyncMessage(child.node_id, "TOPOLOGY")
+
+        elif msg.startswith("TOPOLOGY RESPONSE"):
+            child_topology = msg.split(":")[1]
+            self.buffer[from_node_id] = child_topology
+
+            if len(self.buffer) == len(self.children):
+                topology = f"({self.node_id},({','.join([self.buffer[child.node_id] for child in self.children])}))"
+                if not self.parent:
+                    print(topology)
+                else:
+                    self.sendAsyncMessage(self.parent.node_id, f"TOPOLOGY RESPONSE:{topology}")
+                self.buffer.clear()
+
+
+
+class TestNode(unittest.TestCase):
+
+    #    1
+    #   2 3
+    #  4 5
+    def test_receive_msg(self):
+        node3 = Node("3")
+        node4 = Node("4")
+        node5 = Node("5")
+        node2 = Node("2", children=[node4, node5])
+        node4.parent = node2
+        node5.parent = node2
+
+        node1 = Node("1", children=[node2, node3])
+        node2.parent = node1
+        node3.parent = node1
+
+        NODE_REGISTRY["1"] = node1
+        NODE_REGISTRY["2"] = node2
+        NODE_REGISTRY["3"] = node3
+        NODE_REGISTRY["4"] = node4
+        NODE_REGISTRY["5"] = node5
+
+        node1.sendAsyncMessage(node1.node_id, "COUNT")
+        node1.sendAsyncMessage(node1.node_id, "TOPOLOGY")
+
+        NODE_REGISTRY["6"] = Node("6")
+        NODE_REGISTRY["6"].sendAsyncMessage("6", "COUNT")
+        NODE_REGISTRY["6"].sendAsyncMessage("6", "TOPOLOGY")
+
+
+unittest.main()
