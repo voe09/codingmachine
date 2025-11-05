@@ -45,3 +45,47 @@ class Allocator:
 # obj = Allocator(n)
 # param_1 = obj.allocate(size,mID)
 # param_2 = obj.freeMemory(mID)
+
+
+from bisect import insort
+
+class Allocator:
+
+    def __init__(self, n: int):
+        self.blocks = [[0, n]]
+        self.allocations: dict[int, list[list[int]]] = {} # mID: [(start, size)]
+
+    def allocate(self, size: int, mID: int) -> int:
+        for i in range(len(self.blocks)):
+            if self.blocks[i][1] >= size:
+                start, block_size = self.blocks[i]
+                self.blocks.pop(i)
+                if block_size > size:
+                    insort(self.blocks, [start + size, block_size - size])
+                if mID not in self.allocations:
+                    self.allocations[mID] = []
+                
+                self.allocations[mID].append([start, size])
+                return start
+        return -1
+
+    def freeMemory(self, mID: int) -> int:
+        if mID not in self.allocations:
+            return 0
+
+        block_size = 0
+        for start, size in self.allocations[mID]:
+            block_size += size
+            insort(self.blocks, [start, size])
+        del self.allocations[mID]
+
+        
+        merged_blocks = []
+        for block in self.blocks:
+            if len(merged_blocks) == 0 or merged_blocks[-1][0] + merged_blocks[-1][1] < block[0]:
+                merged_blocks.append(block)
+            else:
+                merged_blocks[-1][1] = merged_blocks[-1][1] + block[1]
+        
+        self.blocks = merged_blocks
+        return block_size
