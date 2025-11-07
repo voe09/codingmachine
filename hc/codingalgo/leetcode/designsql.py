@@ -221,3 +221,144 @@ sql.insert("people", ["Chris", "35", "M", "90"])
 sql.insert("people", ["Hannah", "28", "F", "99"])
 sql.insert("people", ["Allan", "30", "M", "70"])
 print(sql.select("people", ["sex", "name"], ["F", "Chris"], "score"))
+
+
+
+import unittest
+
+from typing import Optional
+
+
+class Table:
+
+    def __init__(self, cols: list[str]):
+        self.cols = cols
+        self.col_index = {}
+        for i, col in enumerate(cols):
+            self.col_index[col] = i
+        self.rows = []
+
+    def insertRow(self, row: list[str]):
+        self.rows.append(row)
+    
+    def delete(
+        self, 
+        whereCols: list[str], 
+        whereVals: list[str], 
+        joiningOp: str,
+    ):
+        rows_to_delete = []
+        for row in self.rows:
+            if joiningOp == "AND":
+                to_delete = all(row[self.col_index[whereCol]] == whereVal for whereCol, whereVal in zip(whereCols, whereVals))
+            else:
+                to_delete = any(row[self.col_index[whereCol]] == whereVal for whereCol, whereVal in zip(whereCols, whereVals))
+            if to_delete:
+                rows_to_delete.append(row)
+        
+        for row in rows_to_delete:
+            self.rows.remove(row)
+    
+    def query(self, cols: list[str], whereCols: list[str], whereVals: list[str], joiningOp: str, orderBy: Optional[str] = None, asc: bool = True):
+        rows_selected = []
+        for row in self.rows:
+            if joiningOp == "AND":
+                selected = all(row[self.col_index[whereCol]] == whereVal for whereCol, whereVal in zip(whereCols, whereVals))
+            else:
+                selected = any(row[self.col_index[whereCol]] == whereVal for whereCol, whereVal in zip(whereCols, whereVals))
+            if selected:
+                rows_selected.append(row)
+        
+        if orderBy:
+            rows_selected = sorted(rows_selected, key = lambda x: x[self.col_index[orderBy]], reverse=not asc)
+        
+        results = []
+        for row in rows_selected:
+            results.append([row[self.col_index[col]] for col in cols])
+        return results
+
+
+
+class TestTable(unittest.TestCase):
+
+    def setUp(self):
+        self.table = Table(["id", "name", "age"])
+        self.table.insertRow(["1", "Alice", "30"])
+        self.table.insertRow(["2", "Bob", "25"])
+        self.table.insertRow(["3", "Charlie", "35"])
+        self.table.insertRow(["4", "Alice", "22"])
+
+    def test_insertRow(self):
+        self.table.insertRow(["5", "David", "28"])
+        self.assertIn(["5", "David", "28"], self.table.rows)
+        self.assertEqual(len(self.table.rows), 5)
+
+    def test_delete_with_AND(self):
+        # Delete rows where name="Alice" AND age="30"
+        self.table.delete(["name", "age"], ["Alice", "30"], "AND")
+        remaining_names = [r[self.table.col_index["name"]] for r in self.table.rows]
+        self.assertNotIn("30", [r[self.table.col_index["age"]] for r in self.table.rows if r[self.table.col_index["name"]] == "Alice"])
+        self.assertEqual(len(self.table.rows), 3)
+
+    def test_delete_with_OR(self):
+        # Delete rows where name="Bob" OR age="22"
+        self.table.delete(["name", "age"], ["Bob", "22"], "OR")
+        names = [r[self.table.col_index["name"]] for r in self.table.rows]
+        self.assertNotIn("Bob", names)
+        self.assertNotIn("22", [r[self.table.col_index["age"]] for r in self.table.rows])
+        self.assertEqual(len(self.table.rows), 2)
+
+    def test_query_with_AND(self):
+        results = self.table.query(
+            cols=["id", "name"],
+            whereCols=["name", "age"],
+            whereVals=["Alice", "30"],
+            joiningOp="AND",
+        )
+        self.assertEqual(results, [["1", "Alice"]])
+
+    def test_query_with_OR(self):
+        results = self.table.query(
+            cols=["id", "name"],
+            whereCols=["name", "age"],
+            whereVals=["Bob", "35"],
+            joiningOp="OR",
+        )
+        # Should match Bob (id=2) and Charlie (id=3)
+        self.assertEqual(sorted(results), sorted([["2", "Bob"], ["3", "Charlie"]]))
+
+    def test_query_with_orderBy_asc(self):
+        results = self.table.query(
+            cols=["id", "name"],
+            whereCols=["name"],
+            whereVals=["Alice"],
+            joiningOp="AND",
+            orderBy="age",
+            asc=True
+        )
+        # Alice (22) before Alice (30)
+        self.assertEqual(results, [["4", "Alice"], ["1", "Alice"]])
+
+    def test_query_with_orderBy_desc(self):
+        results = self.table.query(
+            cols=["id", "name"],
+            whereCols=["name"],
+            whereVals=["Alice"],
+            joiningOp="AND",
+            orderBy="age",
+            asc=False
+        )
+        # Alice (30) before Alice (22)
+        self.assertEqual(results, [["1", "Alice"], ["4", "Alice"]])
+
+    def test_query_no_match(self):
+        results = self.table.query(
+            cols=["id"],
+            whereCols=["name"],
+            whereVals=["Nonexistent"],
+            joiningOp="AND"
+        )
+        self.assertEqual(results, [])
+
+
+unittest.main()
