@@ -163,20 +163,113 @@
 # if __name__ == "__main__":
 #     asyncio.run(main())
 
-import asyncio
+# import asyncio
+# from collections import deque
+
+# class MockLLM:
+
+#     def __init__(self):
+#         self.counter = 0
+
+#     async def generate(self, batch: list[str]) -> list[str]:
+#         tokens = [f"_token_{self.counter}" for _ in batch]
+#         self.counter += 1
+#         return tokens
+
+
+# class Request:
+
+#     def __init__(self, id: str, prefix: str, max_token: int, stop_token: str):
+#         self.id = id
+#         self.res = prefix
+#         self.counter = 0
+#         self.max_token = max_token
+#         self.stop_token = stop_token
+#         self.done_event = asyncio.Event()
+
+#     def add(self, token: str) -> bool:
+#         self.res += token
+#         self.counter += 1
+#         if self.counter == self.max_token or token == self.stop_token:
+#             self.done_event.set()
+#             return True
+#         return False
+    
+
+# class InferenceEngine:
+
+#     def __init__(self, batch_size: int, max_wait_ms: float = 10.0):
+#         self.bz = batch_size
+#         self.max_wait_sec = max_wait_ms / 1000
+#         self.queue = deque([])
+#         self.slots = [None] * batch_size
+#         self.empty = deque(list(range(batch_size)))
+#         self.occupy = {}
+#         self.model = MockLLM()
+#         self._running = False
+
+#     async def infer(self, req: Request) -> str:
+#         self.queue.append(req)
+#         if not self._running:
+#             asyncio.create_task(self._engine_loop())
+#             self._running = True
+
+#         await req.done_event.wait()
+#         return req.res
+
+#     async def _engine_loop(self):
+#         while True:
+#             # prefix slots
+#             while self.queue and self.empty:
+#                 res = self.queue.popleft()
+#                 slot = self.empty.popleft()
+#                 self.slots[slot] = res
+#                 self.occupy[res.id] = slot
+            
+#             if not self.queue and not self.occupy:
+#                 self._running = False
+#                 break
+
+#             reqs = [r for r in self.slots if r is not None]
+#             prefix = [r.res for r in reqs]
+#             tokens = await self.model.generate(prefix)
+#             for req, token in zip(reqs, tokens):
+#                 if req.add(token):
+#                     slot = self.occupy.pop(req.id)
+#                     self.slots[slot] = None
+#                     self.empty.append(slot)
+
+
+# async def main():
+#     engine = InferenceEngine(batch_size=2)
+#     requests = [
+#         Request("1", "New", max_token=2, stop_token="<EOS>"),
+#         Request("2", "Year", max_token=5, stop_token="<EOS>"),
+#         Request("3", "Eve", max_token=3, stop_token="<EOS>"),
+#     ]
+#     tasks = [engine.infer(req) for req in requests]
+#     results = await asyncio.gather(*tasks)
+#     for res in results:
+#         print(res)
+
+# if __name__ == "__main__":
+#     asyncio.run(main())
+
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections import deque
+
 
 class MockLLM:
 
     def __init__(self):
         self.counter = 0
 
-    async def generate(self, batch: list[str]) -> list[str]:
+    def generate(self, batch: list[str]) -> list[str]:
         tokens = [f"_token_{self.counter}" for _ in batch]
         self.counter += 1
         return tokens
-
-
+    
 class Request:
 
     def __init__(self, id: str, prefix: str, max_token: int, stop_token: str):
@@ -185,7 +278,7 @@ class Request:
         self.counter = 0
         self.max_token = max_token
         self.stop_token = stop_token
-        self.done_event = asyncio.Event()
+        self.done_event = threading.Event()
 
     def add(self, token: str) -> bool:
         self.res += token
@@ -195,8 +288,7 @@ class Request:
             return True
         return False
     
-
-class InferenceEngine:
+class InferencEngine:
 
     def __init__(self, batch_size: int, max_wait_ms: float = 10.0):
         self.bz = batch_size
@@ -206,51 +298,61 @@ class InferenceEngine:
         self.empty = deque(list(range(batch_size)))
         self.occupy = {}
         self.model = MockLLM()
-        self._running = False
+        self._has_work = threading.Condition() # built on top of Lock
 
-    async def infer(self, req: Request) -> str:
-        self.queue.append(req)
-        if not self._running:
-            asyncio.create_task(self._engine_loop())
-            self._running = True
+        self.engine_thread = threading.Thread(target=self._engine_loop, daemon=True)
+        self.engine_thread.start()
 
-        await req.done_event.wait()
+    def infer(self, req: Request) -> str:
+        with self._has_work:
+            self.queue.append(req)
+            self._has_work.notify()
+        
+        req.done_event.wait()
         return req.res
 
-    async def _engine_loop(self):
+    def _engine_loop(self):
         while True:
-            # prefix slots
-            while self.queue and self.empty:
-                res = self.queue.popleft()
-                slot = self.empty.popleft()
-                self.slots[slot] = res
-                self.occupy[res.id] = slot
+            with self._has_work:
+                while not self.queue and not self.occupy:
+                    self._has_work.wait()
+
+                if self.empty and not self.queue:
+                    self._has_work.wait(timeout=self.max_wait_sec)
+
+                while self.queue and self.empty:
+                    req = self.queue.popleft()
+                    slot = self.empty.popleft()
+                    self.slots[slot] = req
+                    self.occupy[req.id] = slot
             
-            if not self.queue and not self.occupy:
-                self._running = False
-                break
-
             reqs = [r for r in self.slots if r is not None]
-            prefix = [r.res for r in reqs]
-            tokens = await self.model.generate(prefix)
-            for req, token in zip(reqs, tokens):
-                if req.add(token):
-                    slot = self.occupy.pop(req.id)
-                    self.slots[slot] = None
-                    self.empty.append(slot)
+            if not reqs:
+                continue
+        
+            prefixes = [r.res for r in reqs]
+            tokens = self.model.generate(prefixes)
 
+            with self._has_work:
+                for req, token in zip(reqs, tokens):
+                    if req.add(token):
+                        slot = self.occupy.pop(req.id)
+                        self.slots[slot] = None
+                        self.empty.append(slot)
 
-async def main():
-    engine = InferenceEngine(batch_size=2)
+            
+def main():
+    engine = InferencEngine(batch_size=2)
     requests = [
         Request("1", "New", max_token=2, stop_token="<EOS>"),
         Request("2", "Year", max_token=5, stop_token="<EOS>"),
         Request("3", "Eve", max_token=3, stop_token="<EOS>"),
     ]
-    tasks = [engine.infer(req) for req in requests]
-    results = await asyncio.gather(*tasks)
-    for res in results:
-        print(res)
+    
+    with ThreadPoolExecutor(max_workers=len(requests)) as executor:
+        futures = [executor.submit(engine.infer, req) for req in requests]
+        for future in futures:
+            print(future.result())
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
