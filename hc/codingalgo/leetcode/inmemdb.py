@@ -26,3 +26,34 @@ class InMemDB:
         while len(self.stack) > 1:
             top_level = self.stack.pop()
             self.stack[-1].update(top_level)
+
+
+
+class DB:
+
+    def __init__(self):
+        self.data = {}
+
+    def set(self, key: str, field: str, value: str):
+        if key not in self.data:
+            self.data[key] = {}
+        
+        self.data[key][field] = value
+        return
+
+    def get(self, key: str, field: str):
+        if key not in self.data:
+            return ""
+        if field not in self.data[key]:
+            return ""
+        return self.data[key][field]
+    
+    def delete(self, key: str, field: str):
+        if key not in self.data or field not in self.data[key]:
+            return False
+        
+        self.data[key].pop(field)
+        if len(self.data[key]) == 0:
+            self.data.pop(key)
+        return True
+    
