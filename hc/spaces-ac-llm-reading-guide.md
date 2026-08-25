@@ -1,13 +1,15 @@
 # 科学空间 + SOTA LLM 阅读路线
 
-更新日期：**2026-05-28**
+更新日期：**2026-08-24**
+
+资料截点：**2026-08-24**。`前沿`条目优先采用论文、技术报告、官方博客、模型卡和官方仓库；2026 年 8 月刚发布的工作证据还在积累，阅读时要把作者自报结果和独立复现分开看。
 
 这份文档的目标，不再是“先看 Su，再看站外论文”，而是把它们**揉成一条可执行的阅读路线**。  
 核心思路是：
 
 1. 先用经典论文建立骨架。
 2. 再用苏剑林的博客把关键机制真正想明白。
-3. 再补 2025-2026 的最新技术报告与论文，知道现在 frontier 到了哪里。
+3. 再补截至 2026-08-24 的技术报告与论文，知道现在 frontier 到了哪里。
 4. 最后对照官方代码仓库和 benchmark，避免停留在“只会读 paper”。
 
 如果只用一句话概括：  
@@ -31,10 +33,10 @@
 
 1. Transformer 主干、Decoder-only、位置编码与 RoPE
 2. 长上下文与长度外推
-3. Attention 效率、MLA、线性注意力、Residual 新结构
+3. Attention 效率、MLA、线性注意力、Residual / Hyper-Connection 新结构
 4. MoE、训练稳定性、优化器、缩放规律
 5. Tokenizer、随机分词、token-free 路线
-6. 预训练数据、数据配比、continued pretraining / mid-training
+6. 预训练数据、目标函数、数据配比、continued pretraining / mid-training
 7. Post-training：SFT、DPO、online preference、reasoning RL、OPD、SDPO
 8. Agentic training、coding agents、agent benchmark、agent training framework
 
@@ -49,17 +51,17 @@
 - **长上下文到底怎么扩，RoPE 为什么老是绕不过去？**  
   `Su T7 / T8 / T9 / T12 / T15 / T16 -> YaRN -> LongRoPE -> yarn 代码`
 - **KV cache、attention 效率、MLA、线性注意力最近怎么演化？**  
-  `GQA -> Su 10091 -> DeepSeek-V2 -> Su T20 / T21 -> Kimi Linear -> Attention Residuals -> 对应 repo`
+  `GQA -> Su 10091 -> DeepSeek-V2 -> Su T20 / T21 -> Kimi Linear -> Attention Residuals -> DeepSeek-V4 -> Kimi K3`
 - **MoE 和大规模训练 recipe 为什么现在又变成重点？**  
-  `Switch / GLaM / Mixtral -> Su MoE 环游记 -> Scaling Laws / Chinchilla -> Muon / QK-Clip / K2`
+  `Switch / GLaM / Mixtral -> Su MoE 环游记 1-9 -> Scaling Laws / Chinchilla -> Muon / QK-Clip -> DeepSeek-V4 / Kimi K3`
 - **Tokenizer 还是不是核心问题？**  
   `BPE / SentencePiece -> Su BytePiece / 随机分词 -> ByT5 / MEGABYTE / BLT`
-- **pretraining / mid-training 不是只靠堆数据，那怎么读？**  
-  `The Pile / Dedup / DoReMi -> OLMo / DataComp-LM -> Don’t Stop Pretraining -> DeepSeekMath / Qwen3`
+- **pretraining / mid-training 的数据和目标函数怎么读？**
+  `The Pile / Dedup / DoReMi -> OLMo / DataComp-LM -> Don’t Stop Pretraining -> DeepSeekMath / Qwen3 -> Su LM Loss`
 - **post-training 现在最前沿的主线是什么？**  
   `InstructGPT -> DPO / ORPO / SimPO -> Online Preference -> DeepSeek-R1 -> SDPO -> OPD / Lightning OPD`
 - **agentic training 到底是在训什么？**  
-  `Kimi K2 / Qwen3 / Qwen3-Coder-Next -> Agent Lightning -> MAD-OPD / OPAD -> tau2-bench / SWE-bench`
+  `Kimi K2 / Qwen3-Coder-Next -> Agent Lightning -> MAD-OPD -> Qwen-AgentWorld -> Kimi K3 / Qwen3.8 -> agent harness / benchmark`
 
 ---
 
@@ -111,15 +113,20 @@
 9. [YaRN: Efficient Context Window Extension of Large Language Models](https://arxiv.org/abs/2309.00071) `骨架`
 10. [LongLoRA: Efficient Fine-tuning of Long-Context Large Language Models](https://arxiv.org/abs/2309.12307) `骨架`
 11. [LongRoPE: Extending LLM Context Window Beyond 2 Million Tokens](https://arxiv.org/abs/2402.13753) `前沿`
+12. [DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence](https://arxiv.org/abs/2606.19348) `前沿`
+    把 1M context 训练和稀疏 / 压缩 attention 的系统设计放在一起看。
+13. [Kimi K3: Open Frontier Intelligence](https://arxiv.org/abs/2607.24653) `前沿`
+    适合对照其 1M context、KDA / Gated MLA 混合结构和 long-horizon agent 训练。
 
 ### 代码 / 工具
 
 - [jquesnelle/yarn](https://github.com/jquesnelle/yarn) `代码`
+- [DeepSeek-V4 模型集合](https://huggingface.co/collections/deepseek-ai/deepseek-v4) `代码`
+- [MoonshotAI/Kimi-K3](https://github.com/MoonshotAI/Kimi-K3) `代码`
 
 ### 这一节的阅读心法
 
-这条线不要一开始就只盯着“谁扩到了 1M / 2M token”。  
-真正该先想明白的是：
+先判断模型能否利用长上下文，再比较 1M / 2M token 的窗口数字：
 
 1. 是**位置编码失效**，还是**attention 结构本身不鲁棒**？
 2. 是**训练长度不够**，还是**推理时插值方法有问题**？
@@ -129,7 +136,7 @@ Su 在这里的价值，比很多综述都高，因为他会强迫你问“为�
 
 ---
 
-## 3. Attention 效率、MLA、线性注意力、Residual 新结构
+## 3. Attention 效率、MLA、线性注意力、Residual / Hyper-Connection 新结构
 
 这一支解决的问题是：**算力和 KV cache 不够时，主干结构怎么改？**
 
@@ -154,7 +161,17 @@ Su 在这里的价值，比很多综述都高，因为他会强迫你问“为�
     2026-03-16 提交。这个工作不改 QKV 本身，而是改“层间信息如何聚合”。
 13. [Attention Residuals 回忆录](https://spaces.ac.cn/archives/11664) `深挖`  
     2026-03-19。非常适合和上面的 tech report 对读。
-14. [低精度Attention可能存在有偏的舍入误差](https://spaces.ac.cn/archives/11371) `深挖`  
+14. [DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence](https://arxiv.org/abs/2606.19348) `前沿`
+    CSA / HCA 与 mHC 分别改造长上下文 attention 和残差连接。
+15. [Kimi K3: Open Frontier Intelligence](https://arxiv.org/abs/2607.24653) `前沿`
+    69 层 KDA + 24 层 Gated MLA，并把 Attention Residuals 和 Stable LatentMoE 用到 2.8T 参数规模。
+16. [简单谈谈K3的MoE和Attention](https://spaces.ac.cn/archives/11848) `深挖`
+    2026-08-04。和 K3 技术报告对读，用来理解 KDA、Gated MLA、AttnRes 与 LatentMoE 的组合动机。
+17. [The Key to Going Linear: Analysis-Driven Transformer Linearization](https://arxiv.org/abs/2607.07706) `前沿`
+18. [LogSumExp和Softmax的泰勒展开](https://spaces.ac.cn/archives/11814) `深挖`
+19. [将Softmax Attention线性化为Gated DeltaNet](https://spaces.ac.cn/archives/11823) `深挖`
+    第 17-19 项从 Softmax 近似推到 Gated DeltaNet，适合当作一组读。
+20. [低精度Attention可能存在有偏的舍入误差](https://spaces.ac.cn/archives/11371) `深挖`
     2025-10-27。适合在你开始关心 BF16 / FP8 / low precision inference 时读。
 
 ### 代码 / kernel / 实现
@@ -163,15 +180,18 @@ Su 在这里的价值，比很多综述都高，因为他会强迫你问“为�
 - [MoonshotAI/Kimi-Linear](https://github.com/MoonshotAI/Kimi-Linear) `代码`
 - [MoonshotAI/Attention-Residuals](https://github.com/MoonshotAI/Attention-Residuals) `代码`
 - [MoonshotAI/FlashKDA](https://github.com/MoonshotAI/FlashKDA) `代码`
+- [MoonshotAI/Kimi-K3](https://github.com/MoonshotAI/Kimi-K3) `代码`
+- [QwenLM/Qwen3.8](https://github.com/QwenLM/Qwen3.8) `代码`
 
 ### 这一节的阅读心法
 
-这里不要把“MLA、linear attention、residual routing”看成互斥路线。  
-它们分别在回答不同问题：
+这些结构分别回答不同问题：
 
 - GQA / MLA：主要解决 **KV cache 与推理效率**
-- DeltaNet / Kimi Linear：主要解决 **长序列效率与表达能力**
-- Attention Residuals：主要解决 **层间信息混合方式**
+- CSA / HCA、DeltaNet / Kimi Linear / KDA：主要解决 **长序列效率与表达能力**
+- Attention Residuals / mHC：主要解决 **层间信息混合方式**
+- Kimi K3：观察 KDA、Gated MLA、AttnRes 和 LatentMoE 如何进入一套完整 recipe
+- Qwen3.8：对照另一条 Gated DeltaNet + sparse MoE 的开放模型路线
 
 ---
 
@@ -189,32 +209,52 @@ Su 在这里的价值，比很多综述都高，因为他会强迫你问“为�
 6. [MoE环游记：3、换个思路来分配](https://spaces.ac.cn/archives/10757) `深挖`
 7. [MoE环游记：4、难处应当多投入](https://spaces.ac.cn/archives/10815) `深挖`
 8. [MoE环游记：5、均匀分布的反思](https://spaces.ac.cn/archives/10945) `深挖`
-9. [Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361) `骨架`
-10. [Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556) `骨架`
-11. [DeepSeek LLM: Scaling Open-Source Language Models with Longtermism](https://arxiv.org/abs/2401.02954) `骨架`
-12. [Muon续集：为什么我们选择尝试Muon？](https://spaces.ac.cn/archives/10739) `深挖`
-13. [QK-Clip：让Muon在Scaleup之路上更进一步](https://spaces.ac.cn/archives/11126) `深挖`
-14. [Muon优化器指南：快速上手与关键细节](https://spaces.ac.cn/archives/11416) `深挖`
-15. [滑动平均视角下的权重衰减和学习率](https://spaces.ac.cn/archives/11459) `深挖`
-16. [Kimi K2: Open Agentic Intelligence](https://arxiv.org/abs/2507.20534) `前沿`  
-    它的重要性不只在 agentic，它也展示了 MuonClip / QK-Clip 在大规模训练里的现实价值。
-17. [基于流式幂迭代的Muon实现：2. 加速](https://spaces.ac.cn/archives/11673) `深挖`
-18. [基于流式幂迭代的Muon实现：3. 雕琢](https://spaces.ac.cn/archives/11697) `深挖`
+9. [MoE环游记：6、最优分配促均衡](https://spaces.ac.cn/archives/11619) `深挖`
+10. [MoE环游记：7、动态激活极简解](https://spaces.ac.cn/archives/11626) `深挖`
+11. [MoE环游记：8、强制序列级均衡](https://spaces.ac.cn/archives/11760) `深挖`
+12. [MoE环游记：9、门控归一化之争](https://spaces.ac.cn/archives/11782) `深挖`
+    第 6-9 篇补齐了分配优化、动态激活、序列级均衡和门控归一化。
+13. [Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361) `骨架`
+14. [Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556) `骨架`
+15. [解构Scaling Law：优化、架构、数据的三重奏](https://spaces.ac.cn/archives/11833) `深挖`
+    2026-07-29。把 scaling law 拆成优化、架构和数据三项因素。
+16. [DeepSeek LLM: Scaling Open-Source Language Models with Longtermism](https://arxiv.org/abs/2401.02954) `骨架`
+17. [Muon续集：为什么我们选择尝试Muon？](https://spaces.ac.cn/archives/10739) `深挖`
+18. [QK-Clip：让Muon在Scaleup之路上更进一步](https://spaces.ac.cn/archives/11126) `深挖`
+19. [Muon优化器指南：快速上手与关键细节](https://spaces.ac.cn/archives/11416) `深挖`
+20. [为什么官方版Muon比MuP版多出一个max(1, ·)？](https://spaces.ac.cn/archives/11772) `深挖`
+21. [滑动平均视角下的权重衰减和学习率](https://spaces.ac.cn/archives/11459) `深挖`
+22. [让炼丹更科学一些（七）：步长调度与权重平均](https://spaces.ac.cn/archives/11804) `深挖`
+23. [Kimi K2: Open Agentic Intelligence](https://arxiv.org/abs/2507.20534) `前沿`
+    Kimi K2 报告展示了 MuonClip / QK-Clip 在大规模训练中的用法。
+24. [基于流式幂迭代的Muon实现：2. 加速](https://spaces.ac.cn/archives/11673) `深挖`
+25. [基于流式幂迭代的Muon实现：3. 雕琢](https://spaces.ac.cn/archives/11697) `深挖`
+26. [DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence](https://arxiv.org/abs/2606.19348) `前沿`
+    适合看 Muon、MoE、mHC 与 million-token attention 怎样进入同一套训练 recipe。
+27. [Kimi K3: Open Frontier Intelligence](https://arxiv.org/abs/2607.24653) `前沿`
+    Stable LatentMoE、Muon 和专家并行系统共同支撑 2.8T 参数训练。
+28. [动量的新理解：逼近特征层面的梯度下降](https://spaces.ac.cn/archives/11875) `深挖`
+    2026-08-23。用在线回归视角重新解释优化器中的动量。
 
 ### 代码 / 系统
 
 - [deepseek-ai/DeepEP](https://github.com/deepseek-ai/DeepEP) `代码`
 - [deepseek-ai/DeepSeek-V3](https://github.com/deepseek-ai/DeepSeek-V3) `代码`
+- [DeepSeek-V4 模型集合](https://huggingface.co/collections/deepseek-ai/deepseek-v4) `代码`
 - [MoonshotAI/Kimi-K2](https://github.com/MoonshotAI/Kimi-K2) `代码`
+- [MoonshotAI/Kimi-K3](https://github.com/MoonshotAI/Kimi-K3) `代码`
+- [MoonshotAI/MoonEP](https://github.com/MoonshotAI/MoonEP) `代码`
 
 ### 这一节的阅读心法
 
-这一节最好分两层理解：
+把这一节分成四层：
 
 1. **稀疏路由层**：MoE 为什么能更大但不必更贵？
-2. **训练系统层**：Muon、QK-Clip、WD/LR schedule 为什么能让大规模训练更稳？
+2. **缩放规律层**：预算、数据、模型规模与 recipe 如何共同影响 loss？
+3. **优化层**：Muon、QK-Clip、WD/LR schedule 为什么能让大规模训练更稳？
+4. **系统层**：专家并行、负载均衡和通信内核怎样决定 MoE 能否落地？
 
-Su 在第 2 层非常有价值，尤其是 Muon 和训练细节这一串 2025-2026 新文章。
+Su 在第 1-3 层都有连续文章；Kimi K3、DeepSeek-V4、DeepEP 和 MoonEP 补上完整模型与系统证据。
 
 ---
 
@@ -256,9 +296,9 @@ Su 在“随机分词 / 大词表副作用 / BytePiece”上很有个人视角�
 
 ---
 
-## 6. 预训练数据、数据配比、continued pretraining / mid-training
+## 6. 预训练数据、目标函数、数据配比、continued pretraining / mid-training
 
-这一支解决的问题是：**模型不是只靠结构长出来的，数据和中继训练到底怎么做？**
+这一支解决的问题是：**训练数据、语言模型目标函数和中继训练怎样共同决定模型能力？**
 
 ### 推荐顺序
 
@@ -276,6 +316,8 @@ Su 在“随机分词 / 大词表副作用 / BytePiece”上很有个人视角�
     对“thinking / non-thinking 一体化”以及蒸馏式构建小模型很关键。
 12. [Phi-4 Technical Report](https://arxiv.org/abs/2412.08905) `前沿`  
     适合看“数据质量 + 合成数据 + curriculum”。
+13. [除了交叉熵，LM Loss还有什么选择？](https://spaces.ac.cn/archives/11854) `深挖`
+    2026-08-09。从分类损失出发，检查语言模型训练是否必须使用交叉熵，以及替代目标会改变什么。
 
 ### 代码 / 数据 / pipeline
 
@@ -284,15 +326,13 @@ Su 在“随机分词 / 大词表副作用 / BytePiece”上很有个人视角�
 
 ### 这一节的阅读心法
 
-Su 的博客在这一支**不是没有价值**，但它不是他最系统的主线。  
-如果你主要想建立对 modern pretraining recipe 的理解，这一节应该更偏向读 paper / tech report。
+Su 对数据工程没有像 RoPE 那样的完整系列；第 13 篇补的是目标函数机理。Modern pretraining recipe 仍应以论文、技术报告、数据卡和可复现实验为主。
 
 ---
 
 ## 7. Post-training：SFT、DPO、online preference、reasoning RL、OPD、SDPO
 
-这是这次重写里最重要的一节。  
-你提到的 **post-training、OPD、新 area**，主要都在这里。
+这一节把 preference optimization、reasoning RL、自蒸馏和 OPD 放在同一条演化线上。
 
 ### 7.1 先建立经典骨架
 
@@ -308,37 +348,47 @@ Su 的博客在这一支**不是没有价值**，但它不是他最系统的主�
 
 ### 7.2 再进入 reasoning post-training
 
-9. [DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning](https://arxiv.org/abs/2501.12948) `前沿`  
+9. [DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models](https://arxiv.org/abs/2402.03300) `骨架`
+   重读其中的 GRPO；它是理解后续 reasoning RL 的算法入口。
+10. [DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning](https://arxiv.org/abs/2501.12948) `前沿`
    2025-01-22。reasoning post-training 的里程碑。
-10. [DeepSeek-R1 官方仓库](https://github.com/deepseek-ai/DeepSeek-R1) `代码`
-11. [Reinforcement Learning via Self-Distillation (SDPO)](https://arxiv.org/abs/2601.20802) `前沿`  
+11. [DeepSeek-R1 官方仓库](https://github.com/deepseek-ai/DeepSeek-R1) `代码`
+12. [DAPO: An Open-Source LLM Reinforcement Learning System at Scale](https://arxiv.org/abs/2503.14476) `骨架`
+    补齐大规模 reasoning RL 的可复现算法细节和工程 recipe。
+13. [BytedTsinghua-SIA/DAPO](https://github.com/BytedTsinghua-SIA/DAPO) `代码`
+14. [Kimi K3: Open Frontier Intelligence](https://arxiv.org/abs/2607.24653) `前沿`
+    重点看 general、agentic、coding 三类 RL，以及 million-token agentic rollout 的系统约束。
+15. [Reinforcement Learning via Self-Distillation (SDPO)](https://arxiv.org/abs/2601.20802) `前沿`
     2026-01-28。重点不是 preference，而是把 rich feedback 变成 dense signal。
-12. [lasgroup/SDPO](https://github.com/lasgroup/SDPO) `代码`
+16. [lasgroup/SDPO](https://github.com/lasgroup/SDPO) `代码`
 
 ### 7.3 再进入 OPD 主线
 
-13. [A Survey of On-Policy Distillation for Large Language Models](https://arxiv.org/abs/2604.00626) `前沿`  
+17. [A Survey of On-Policy Distillation for Large Language Models](https://arxiv.org/abs/2604.00626) `前沿`
     2026-04-01。适合先把 OPD 的设计空间、失败模式、与 KL-RL 的关系扫一遍。
-14. [On-Policy Distillation of Language Models: Learning from Self-Generated Mistakes](https://arxiv.org/abs/2306.13649) `骨架`  
+18. [On-Policy Distillation of Language Models: Learning from Self-Generated Mistakes](https://arxiv.org/abs/2306.13649) `骨架`
     OPD 的起点。
-15. [Learning beyond Teacher: Generalized On-Policy Distillation with Reward Extrapolation](https://arxiv.org/abs/2602.12125) `前沿`  
+19. [Learning beyond Teacher: Generalized On-Policy Distillation with Reward Extrapolation](https://arxiv.org/abs/2602.12125) `前沿`
     2026-02-12。G-OPD / ExOPD，把 OPD 放回 KL 约束 RL 框架里理解。
-16. [RUCBM/G-OPD](https://github.com/RUCBM/G-OPD) `代码`
-17. [Lightning OPD: Efficient Post-Training for Large Reasoning Models with Offline On-Policy Distillation](https://arxiv.org/abs/2604.13010) `前沿`  
+20. [RUCBM/G-OPD](https://github.com/RUCBM/G-OPD) `代码`
+21. [Lightning OPD: Efficient Post-Training for Large Reasoning Models with Offline On-Policy Distillation](https://arxiv.org/abs/2604.13010) `前沿`
     2026-04-14。offline OPD + teacher consistency，是现在很值得重点读的一个点。
-18. [Revisiting On-Policy Distillation: Empirical Failure Modes and Simple Fixes](https://arxiv.org/abs/2603.25562) `前沿`
-19. [Rethinking On-Policy Distillation of Large Language Models: Phenomenology, Mechanism, and Recipe](https://github.com/thunlp/OPD) `代码`
-20. [hhh675597/revisiting_opd](https://github.com/hhh675597/revisiting_opd) `代码`
-21. [On-Policy Distillation (OPD) — verl 文档](https://verl.readthedocs.io/en/latest/algo/opd.html) `代码`
-22. [NVIDIA-NeMo/RL](https://github.com/NVIDIA-NeMo/RL) `代码`
-23. [huggingface/trl Distillation Trainer](https://github.com/huggingface/trl/blob/main/docs/source/distillation_trainer.md) `代码`
-24. [MAD-OPD: Breaking the Ceiling in On-Policy Distillation via Multi-Agent Debate](https://arxiv.org/abs/2605.01347) `前沿`  
+22. [Revisiting On-Policy Distillation: Empirical Failure Modes and Simple Fixes](https://arxiv.org/abs/2603.25562) `前沿`
+23. [Rethinking On-Policy Distillation of Large Language Models: Phenomenology, Mechanism, and Recipe](https://github.com/thunlp/OPD) `代码`
+24. [hhh675597/revisiting_opd](https://github.com/hhh675597/revisiting_opd) `代码`
+25. [On-Policy Distillation (OPD) — verl 文档](https://verl.readthedocs.io/en/latest/algo/opd.html) `代码`
+26. [NVIDIA-NeMo/RL](https://github.com/NVIDIA-NeMo/RL) `代码`
+27. [huggingface/trl Distillation Trainer](https://github.com/huggingface/trl/blob/main/docs/source/distillation_trainer.md) `代码`
+28. [MAD-OPD: Breaking the Ceiling in On-Policy Distillation via Multi-Agent Debate](https://arxiv.org/abs/2605.01347) `前沿`
     2026-05-02。把 OPD 正式拉进了 **agentic tasks**。
+29. [SimpleOPD: Simple Tokenizer-Agnostic On-Policy Distillation for Long-Context Reasoning](https://arxiv.org/abs/2608.14277) `前沿`
+    2026-08-14。关注异构 tokenizer、长短上下文 teacher / student 和训练稳定性。
+30. [Step-Level On-Policy Distillation: Interpolating Between On-Policy Distillation and Supervised Fine-Tuning](https://arxiv.org/abs/2608.16333) `前沿`
+    2026-08-17。把监督粒度从 token 提升到 reasoning step，并在 reasoning 与 agent tasks 上评估。第 29-30 项仍属新近结果。
 
 ### 7.4 Su 在这一支怎么读？
 
-Su 在 post-training 这一支**没有像 RoPE 那样的完整长系列**，所以不要硬找一一对应。  
-更合理的搭配是：
+Su 在 post-training 上没有像 RoPE 那样的完整长系列。可以这样搭配：
 
 1. 用上面的 paper 把 post-training 大框架搭起来。
 2. 再用 Su 的 PEFT / 训练细节文章补“局部机理”：
@@ -353,8 +403,9 @@ Su 在 post-training 这一支**没有像 RoPE 那样的完整长系列**，所�
 2. online preference optimization 比 offline 方法多解决了什么？
 3. RLVR / reasoning RL 和 preference optimization 的关系是什么？
 4. OPD / SDPO 为什么会在 2026 变得这么重要？
+5. token-level、step-level、offline 和 online OPD 各自改变了哪一种监督信号？
 
-如果这四个问题想明白了，你对 modern post-training 的理解会比只读 benchmark 表格强很多。
+回答这五个问题后，你应该能区分 post-training 的算法目标、监督信号和 benchmark 结果。
 
 ---
 
@@ -374,29 +425,39 @@ Su 在 post-training 这一支**没有像 RoPE 那样的完整长系列**，所�
 5. [Agent Lightning: Train ANY AI Agents with Reinforcement Learning](https://arxiv.org/abs/2508.03680) `前沿`  
    偏 framework / system，但很适合从“训练 agent”角度读。
 6. [MAD-OPD: Breaking the Ceiling in On-Policy Distillation via Multi-Agent Debate](https://arxiv.org/abs/2605.01347) `前沿`  
-   这篇和上面的 Agent Lightning 一起看，很容易看出 2026 的趋势：  
-   **agent training 正在和 OPD / self-distillation / multi-agent orchestration 合流。**
+   和 Agent Lightning 对读，理解 OPD / self-distillation / multi-agent orchestration 怎样进入 agent training。
+7. [Qwen-AgentWorld: Language World Models for General Agents](https://arxiv.org/abs/2606.24597) `前沿`
+   2026-06-24。把 MCP、Search、Terminal、SWE、Android、Web、OS 七类环境统一为 next-state prediction，并用 CPT、SFT、RL 三阶段训练。
+8. [Kimi K3: Open Frontier Intelligence](https://arxiv.org/abs/2607.24653) `前沿`
+   2026-07-27。重点读 long-horizon coding、agentic knowledge work、million-token rollout 和 sandbox state 管理。
+9. [Qwen3.8 官方仓库与模型卡](https://github.com/QwenLM/Qwen3.8) `代码`
+   2026-08。用 Qwen3.8 开放模型检查 long-horizon agent execution、`reasoning_effort` 和 `preserve_thinking` 的产品化接口。
 
 ### 代码 / agent 工具 / benchmark
 
 - [MoonshotAI/Kimi-K2](https://github.com/MoonshotAI/Kimi-K2) `代码`
+- [MoonshotAI/Kimi-K3](https://github.com/MoonshotAI/Kimi-K3) `代码`
+- [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) `代码`
 - [QwenLM/Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder) `代码`
 - [QwenLM/qwen-code](https://github.com/QwenLM/qwen-code) `代码`
+- [QwenLM/Qwen-AgentWorld](https://github.com/QwenLM/Qwen-AgentWorld) `代码`
 - [microsoft/agent-lightning](https://github.com/microsoft/agent-lightning) `代码`
+- [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) `代码`
+  目前是 developer preview，适合读 harness 的插件架构，不适合当稳定 API 依赖。
 - [tau2-bench 官方仓库](https://github.com/sierra-research/tau2-bench) `代码`
 - [SWE-bench 网站与评测入口](https://swebench.lol/) `代码`
 - [SWE-bench 网站仓库](https://github.com/SWE-bench/swe-bench.github.io) `代码`
 
 ### 这一节的阅读心法
 
-agentic training 不是“在 prompt 里加一句你是 agent”这么简单。  
-真正关键的是三层：
+把 agentic training 拆成四层：
 
 1. **模型能力层**：code / tool use / long context / reasoning
 2. **环境反馈层**：执行结果、测试结果、runtime error、judge feedback
 3. **训练算法层**：RL、OPD、SDPO、multi-agent debate、trajectory decomposition
+4. **harness 与评测层**：tool protocol、state persistence、sandbox、benchmark 和可复现执行
 
-如果你把这一节和第 7 节一起读，就会很自然地理解为什么 2026 的 agent 训练论文越来越像“post-training 论文”，而不是“prompt engineering 论文”。
+第 7 节解释优化信号，这一节解释信号从哪里来、如何通过环境和 harness 进入轨迹。Qwen-AgentWorld 还增加了一条新路线：训练语言 world model 来模拟环境，再用模拟轨迹扩展 agent RL。
 
 ---
 
@@ -407,21 +468,21 @@ agentic training 不是“在 prompt 里加一句你是 agent”这么简单。
 1. **主干与位置编码**  
    `AIAYN -> Su 位置编码总览 -> T1/T2 -> RoFormer -> T10`
 2. **长上下文**  
-   `T7 -> T9 -> T12 -> T16 -> YaRN -> LongRoPE`
+   `T7 -> T9 -> T12 -> T16 -> YaRN -> LongRoPE -> DeepSeek-V4 -> Kimi K3`
 3. **效率与结构改造**  
-   `GQA -> MHA/MQA/GQA/MLA -> DeepSeek-V2 -> T20/T21 -> 线性注意力简史 -> Kimi Linear -> Attention Residuals`
+   `GQA -> MHA/MQA/GQA/MLA -> DeepSeek-V2 -> T20/T21 -> 线性注意力简史 -> Kimi Linear -> Attention Residuals -> DeepSeek-V4 -> Kimi K3 -> Softmax线性化`
 4. **MoE + pretraining + 优化器**  
-   `Switch -> GLaM -> Mixtral -> MoE环游记 -> Scaling Laws -> Chinchilla -> DeepSeek LLM -> Muon续集 -> QK-Clip -> Muon指南`
+   `Switch -> GLaM -> Mixtral -> MoE环游记1-9 -> Scaling Laws -> Chinchilla -> Su Scaling Law -> DeepSeek LLM -> Muon续集 -> QK-Clip -> Muon指南 -> Kimi K3`
 5. **Tokenizer**  
    `BPE -> SentencePiece -> Subword Reg -> BytePiece -> 随机分词 -> BLT`
 6. **数据与 mid-training**  
-   `The Pile -> Dedup -> DoReMi -> OLMo -> DataComp-LM -> Don’t Stop Pretraining -> Self-Instruct -> DeepSeekMath -> Magpie`
+   `The Pile -> Dedup -> DoReMi -> OLMo -> DataComp-LM -> Don’t Stop Pretraining -> Self-Instruct -> DeepSeekMath -> Magpie -> Su LM Loss`
 7. **post-training 核心**  
    `InstructGPT -> Constitutional AI -> DPO -> ORPO -> SimPO -> Online Preference Optimisation`
 8. **reasoning / RLVR / OPD / SDPO**  
-   `DeepSeek-R1 -> SDPO -> OPD origin -> G-OPD -> Lightning OPD -> thunlp/OPD -> MAD-OPD`
+   `DeepSeekMath / GRPO -> DeepSeek-R1 -> DAPO -> SDPO -> OPD origin -> G-OPD -> Lightning OPD -> thunlp/OPD -> MAD-OPD -> SimpleOPD / Step-Level OPD`
 9. **agentic training**  
-   `Kimi K2 -> Qwen3 -> Qwen3-Coder-Next -> Kimi K2.5 -> Agent Lightning -> tau2-bench / SWE-bench / qwen-code`
+   `Kimi K2 -> Qwen3-Coder-Next -> Kimi K2.5 -> Agent Lightning -> Qwen-AgentWorld -> Kimi K3 -> Qwen3.8 -> benchmark / harness / coding agent`
 
 ---
 
@@ -444,24 +505,21 @@ agentic training 不是“在 prompt 里加一句你是 agent”这么简单。
 13. [Reinforcement Learning via Self-Distillation (SDPO)](https://arxiv.org/abs/2601.20802)
 14. [Lightning OPD](https://arxiv.org/abs/2604.13010)
 15. [Qwen3-Coder-Next Technical Report](https://arxiv.org/abs/2603.00729)
+16. [DeepSeek-V4](https://arxiv.org/abs/2606.19348)
+17. [Kimi K3](https://arxiv.org/abs/2607.24653)
+18. [Qwen-AgentWorld](https://arxiv.org/abs/2606.24597)
 
 ---
 
-## 这次重写补了什么
+## 2026-08-24 更新记录
 
-相对上一版，这一版主要修了四个问题：
+相对 2026-05-28 版，这次更新包括：
 
-1. **补上了 2025-2026 的新内容**  
-   特别是 Kimi K2.5、Qwen3-Coder-Next、Attention Residuals、SDPO、Lightning OPD、MAD-OPD、G-OPD。
-2. **补上了 Su 的最新博客**  
-   特别是 Attention Residuals、DeltaNet L2 Normalize、Muon 指南、QK-Clip、流式幂迭代 Muon 等。
-3. **不再把 Su 和 SOTA 分开**  
-   现在每条主题线都是交叉排序。
-4. **把 post-training / OPD / agentic training 拉成主线**  
-   而不是只停留在架构、RoPE、MoE。
+1. **模型与架构**：加入 DeepSeek-V4、Kimi K3、Qwen3.8，以及 KDA、Gated MLA、mHC、Stable LatentMoE 等 2026 年结构更新。
+2. **科学空间**：补齐 MoE 环游记 6-9，并加入 K3 架构、Softmax 线性化、Scaling Law、LM Loss、LR schedule 和动量文章。
+3. **Post-training**：补上 DeepSeekMath / GRPO 到 DAPO 的 reasoning RL 入口，并加入 2026 年 8 月的 SimpleOPD 与 Step-Level OPD。
+4. **Agentic training**：加入 Qwen-AgentWorld、Kimi K3、Qwen3.8、Kimi Code 和 DeepSeek Harness，区分模型、环境、训练算法、harness 与 benchmark。
 
-## 最后一句
+## 阅读时保留的四件事
 
-如果你真正想把这批材料读透，最有价值的姿势不是“刷 paper 标题”，而是：
-
-**每个主题都同时看一篇骨架 paper、一篇 Su 深挖、一篇 2025-2026 更新、一个官方 repo。**
+每个主题各选一篇骨架 paper、一篇 Su 深挖、一篇当前前沿和一个官方 repo。记录四项内容：核心假设、训练 / 推理成本、作者给出的证据、尚未被独立验证的结论。
