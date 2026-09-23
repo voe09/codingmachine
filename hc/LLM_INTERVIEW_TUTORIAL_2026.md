@@ -4,8 +4,8 @@
 
 ## A case-based tutorial for 2026 interviews
 
-Updated: **2026-08-26**  
-Evidence cutoff for the frontier section: **2026-08-24**
+Updated: **2026-09-22**
+Marin evidence cutoff: **2026-09-22**. The companion reading guide also selects external frontier sources through **2026-09-22**; its selection is not a comprehensive survey of the month.
 
 This tutorial teaches the reasoning used to develop a language model: how to
 turn a capability goal into a training recipe, measure whether an idea works,
@@ -444,6 +444,8 @@ For “How would you choose the size of a model under a compute budget?”:
 **Red flag:** citing Chinchilla as a universal parameter-to-token ratio without
 checking data, architecture, or extrapolation.
 
+**September case update.** The [535B-A23B hero campaign #8435](https://github.com/marin-community/marin/issues/8435) targets 18T tokens, but its scale ladder and context phases are conditional decisions, not a single fixed training recipe. The [fast-track framework PR #9287](https://github.com/marin-community/marin/pull/9287) adds matched dense/MoE experiments at d512–d1280 with a 16k-BPE tokenizer. A proposed [hold-one-feature-out grid #9288](https://github.com/marin-community/marin/issues/9288) is useful for designing a screen; do not cite it as a measured win. Interview question: what evidence at d512 and d1024 would justify spending the next order of magnitude of compute?
+
 ### Case 2: diagnose an unstable run
 
 #### Start with the causal chain
@@ -560,6 +562,8 @@ State the timeline and competing hypotheses before proposing a fix. Interviewers
 are looking for causal isolation, checkpoint discipline, and the ability to
 distinguish data phase shifts from numerical instability.
 
+**September case update.** In [hero gradient-norm investigation #9148](https://github.com/marin-community/marin/issues/9148), the `lm_head` accounted for about 95% of squared total gradient norm around 100k steps. Fixed-checkpoint probes compared numerical paths and z-loss settings; they did not show a direct kernel bug that warranted interrupting a run with stable loss and evaluations. The later [router-precision check in #8435](https://github.com/marin-community/marin/issues/8435) changed top-8 order for 8.9853% of tokens, slowed steps by roughly 1.5–2%, and found no benefit over a 20-step continuation. That argues against a mid-run switch, not against testing higher precision in a fresh-run ablation. The interview skill is knowing when a surprising internal statistic is a monitoring signal rather than a mandate to intervene.
+
 ### Case 3: decide whether an architecture idea is real
 
 #### Evaluate quality and runtime together
@@ -660,6 +664,8 @@ positive at d512 and negative at d768.
 \(1.18(0.82)=0.968\), already below one. The scale inversion is additional
 negative evidence. Reject from the current recipe; retain the mechanism and
 measurements as a negative result. Do not average the two scales into a win.
+
+**September case update.** The [fast-track PR #9287](https://github.com/marin-community/marin/pull/9287) makes the control contract unusually explicit: data- versus compute-matched runs, width ladder, and tokenizer cache tags that prevent evaluation against the wrong vocabulary. The latter is not housekeeping; a cache mismatch can manufacture an architecture result. Treat the [feature-ablation proposal #9288](https://github.com/marin-community/marin/issues/9288) as an experiment design to critique, not a set of completed outcomes.
 
 ### Case 4: make data a reproducible experimental variable
 
@@ -785,6 +791,8 @@ tokens/s, and source-token counts. Require the hypothesized domain gain without
 an unacceptable broad regression. If the candidate changes average token
 length or packing efficiency, charge the wall-clock difference.
 
+**September case update.** The [hero mixture swap #9126](https://github.com/marin-community/marin/issues/9126) completed a d1536 study: main-phase BPB changed from 0.92507 to 0.91844, with an estimated 1.20× **compute-equivalent** speedup if throughput is equal. Wikipedia was a small regression and code BPB regressed at some smaller widths. This does not measure a 1.20× wall-clock gain or prove that all proposed production phases were deployed. The [SFT audit #9212](https://github.com/marin-community/marin/issues/9212) scanned 113,347,086 normalized conversations and flagged 8,421,460 (7.43%) for possible eval overlap; after duplicate/overlap removal 104,878,042 remained. Flags are not verified leakage, counts are not token-weighted, and bounded dedup comparisons do not establish exhaustive recall. Good data work states the detection limits beside the impressive counts.
+
 ### Case 5: design the training system and recovery contract
 
 #### Parallelism dimensions
@@ -901,6 +909,8 @@ the most-loaded expert rank, tune routing/capacity or expert placement. If all
 ranks wait on the collective with balanced loads, investigate transport,
 message sizes, and overlap. Do not optimize the expert GEMM based only on mean
 utilization.
+
+**September case update.** [Context-parallel PR #9119](https://github.com/marin-community/marin/pull/9119) ran 40 diagnostic updates at 262k context on 64 GB200 GPUs, reporting 10.03% median MFU and 1.42% token drops under that configuration. It establishes a finite training path, not long-context model quality. [H100 65k diagnostics #9277](https://github.com/marin-community/marin/issues/9277) report 15.523% MFU for PP24/EP8 at batch 384 versus 9.877% for PP24/EP4/CP2 at batch 96. Since batch and layout differ, the numbers are not an isolated CP speed comparison. [Hero handoff #8506](https://github.com/marin-community/marin/issues/8506) used a 200-step parent/child loss-overlap check (mean difference +0.000306) and explicit checkpoint lineage. Recovery, finite steps, throughput, and capability need separate gates.
 
 ### Case 6: separate model quality from serving and evaluation
 
@@ -1055,6 +1065,8 @@ A launch-quality suite contains:
 - regression sets from known failures;
 - contamination and benchmark-version records.
 
+**September case update.** The living [Eval Policy v0.1 #9193](https://github.com/marin-community/marin/issues/9193) specifies benchmark versions, metrics, repeats, generation limits, and a protected out-of-distribution set. [Protocol PR #9145](https://github.com/marin-community/marin/pull/9145) records attempted/full counts and uncertainty; [standard-error PR #9196](https://github.com/marin-community/marin/pull/9196) corrected an AIME24 interval from a vacuous [0, 1] to approximately [0.129, 0.197] in a reported case. Repeated trials over 30 questions are not 300 independent questions. [Harbor PR #9327](https://github.com/marin-community/marin/pull/9327) forwards the requested generation-token limit to ordinary requests, illustrating how an output-budget bug can affect apparent score parity. Policy v0.1 is still evolving; quote the tested protocol, not merely its name.
+
 ### Case 7: choose a post-training signal
 
 #### Supervised fine-tuning
@@ -1191,7 +1203,7 @@ signals on states the student actually visits. This reduces a form of
 distribution mismatch but makes teacher inference, synchronization, and
 feedback design part of training.
 
-As of the evidence cutoff, OPD and SDPO are active 2026 research directions.
+OPD and SDPO remain active 2026 research directions; Marin's [September OPD/MOPD prototype #9250](https://github.com/marin-community/marin/issues/9250) supplies preliminary implementation evidence, not a settled recipe.
 Treat reported gains as method evidence that still needs independent
 replication. Distinguish:
 
@@ -1243,6 +1255,8 @@ weak solutions on problems with executable tests.
 
 Starting with RL on an invalid tool protocol wastes rollout compute and confounds
 interface errors with reasoning.
+
+**September case update.** [Snowball comparison #9225](https://github.com/marin-community/marin/issues/9225) reports sampled SWE-bench Verified scores of 0.145 for its starting checkpoint and 0.307 for SFT+RL, while TB2 goes from 0.094 to 0.050. The starting checkpoint is already Stage-3 SFT; trial counts and concurrency differ, and the domains are not equivalent. This is evidence of capability redistribution, not “RL universally improves agents.” [Async RL #8936](https://github.com/marin-community/marin/issues/8936) found raw GSM8K reward could hide nonterminating answers (120/128 raw successes versus 64 completed in one arm); its [successor #8955](https://github.com/marin-community/marin/issues/8955) still studies safe staleness and quality gates. [OPD/MOPD prototype #9250](https://github.com/marin-community/marin/issues/9250) establishes preliminary parity tests, not a production replacement for RL.
 
 ### Case 8: develop retrieval, agents, and multimodal systems
 
@@ -1379,7 +1393,7 @@ These have broad practical evidence, though recipes differ:
 - paged KV management and continuous batching;
 - agent evaluation with infrastructure and trajectory gates.
 
-#### Active frontier as of 2026-08-24
+#### Active frontier: selected external sources through 2026-09-22
 
 | Direction | Mechanism to understand | Evidence question |
 |---|---|---|
@@ -1401,6 +1415,19 @@ Recent model reports such as
 studies. Read them as bundles of choices. Separate the claimed mechanism,
 ablation evidence, hardware/software stack, evaluation protocol, and facts that
 have independent reproduction.
+
+The September selections add two particularly useful interview contrasts.
+[Qwen3.8-Next](https://arxiv.org/abs/2608.30320) jointly ablates hybrid
+Gated DeltaNet/attention, sparse attention, Gated Residual, and optimizer
+settings; its authors explicitly report that lower loss and downstream accuracy
+can diverge. [DeepSeek-V4.1-Flash](https://arxiv.org/abs/2609.19969) reports a
+causal encoder-decoder design and cross-layer/FP4 KV-cache compression for
+input-heavy agent workloads. Treat its cost and capability numbers as
+author-reported until independently measured. In post-training,
+[Rethinking OPD II](https://arxiv.org/abs/2609.04172) reports that one query's
+rollouts cover 71.5% of the states visited by its full-data experiment; the
+interview question is whether state coverage or slow student alignment limits
+progress, and whether that finding transfers beyond its tested settings.
 
 ### 10. How to read a paper, issue, or standup
 
@@ -1436,6 +1463,17 @@ decision:
 - downstream SFT and agent evaluation reveal capability redistribution.
 
 The model recipe is a chain of measured contracts across research and systems.
+
+#### Worked extraction: September Marin standup
+
+The [week of September 21 standup #9324](https://github.com/marin-community/marin/issues/9324) mentions 535B context extension, async RL weight sync, rapid dense/MoE screens, SFT filtering, and evaluator changes. Choose one claim and trace it to a narrower primary artifact. For example:
+
+- “262k context works” means [PR #9119](https://github.com/marin-community/marin/pull/9119) ran 40 finite diagnostic updates at that length, not that the trained model solves 262k retrieval tasks.
+- “Mixture gives 1.20× speedup” means [issue #9126](https://github.com/marin-community/marin/issues/9126) estimates a compute-equivalent advantage under equal throughput, not measured end-to-end wall-clock progress.
+- “SFT overlap is 7.43%” means [issue #9212](https://github.com/marin-community/marin/issues/9212) flagged that share for possible overlap under a bounded comparison, not verified benchmark leakage.
+- “The hero resumed correctly” means [issue #8506](https://github.com/marin-community/marin/issues/8506) passed a 200-step lineage/overlap check, not that all later training is numerically identical.
+
+For each sentence, say what evidence would upgrade it to a stronger claim. That exercise is closer to a research interview than memorizing a model card.
 
 ---
 
@@ -1683,6 +1721,11 @@ quality.
    separate model, harness, and serving causes.
 9. [Standups](https://github.com/marin-community/marin/issues?q=repo%3Amarin-community%2Fmarin+standup):
    follow live constraints, then open the linked experiment issues for evidence.
+10. [Current 535B hero campaign #8435](https://github.com/marin-community/marin/issues/8435), [handoff #8506](https://github.com/marin-community/marin/issues/8506), and [runbook](https://github.com/marin-community/marin/blob/main/experiments/grug/moe_hero_ep/README.md): distinguish planned scale/context phases from measured continuation.
+11. [Mixture #9126](https://github.com/marin-community/marin/issues/9126) and [SFT overlap #9212](https://github.com/marin-community/marin/issues/9212): practice compute-equivalent accounting and contamination caveats.
+12. [Context-parallel PR #9119](https://github.com/marin-community/marin/pull/9119) and [H100 diagnostics #9277](https://github.com/marin-community/marin/issues/9277): distinguish finite-step throughput from long-context capability.
+13. [Eval Policy #9193](https://github.com/marin-community/marin/issues/9193) and [Snowball comparison #9225](https://github.com/marin-community/marin/issues/9225): separate protocol design from capability-specific post-training outcomes.
+14. [September 21 standup #9324](https://github.com/marin-community/marin/issues/9324): use it as a current index, then read linked primary artifacts.
 
 ### 19. Foundation sources
 

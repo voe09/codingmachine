@@ -1,15 +1,17 @@
+<!-- markdownlint-disable MD013 MD024 MD029 -->
+
 # 科学空间 + SOTA LLM 阅读路线
 
 更新日期：**2026-09-22**
 
-资料截点：**2026-09-22**。`前沿`条目优先采用论文、技术报告、官方博客、模型卡和官方仓库；近期预印本与模型报告的证据还在积累，阅读时要把作者自报结果和独立复现分开看。
+资料截点：外部论文与模型报告的选读清单、Marin 实践案例均截至 **2026-09-22**。`前沿`条目优先采用论文、技术报告、官方博客、模型卡和官方仓库；新近工作的证据还在积累，阅读时要把作者自报结果和独立复现分开看。这是一份精选路线，不是对所有 9 月新论文的全面盘点。
 
 这份文档的目标，不再是“先看 Su，再看站外论文”，而是把它们**揉成一条可执行的阅读路线**。  
 核心思路是：
 
 1. 先用经典论文建立骨架。
 2. 再用苏剑林的博客把关键机制真正想明白。
-3. 再补截至 2026-09-22 的技术报告与论文，知道现在 frontier 到了哪里。
+3. 再补截至 2026-09-22 的技术报告与论文，理解 frontier 的主要方向；用下文的 Marin 案例观察研发判断如何落地。
 4. 最后对照官方代码仓库和 benchmark，避免停留在“只会读 paper”。
 
 如果只用一句话概括：  
@@ -537,6 +539,22 @@ Su 在 post-training 上没有像 RoPE 那样的完整长系列。可以这样�
 
 ---
 
+## 2026-09-22：把论文问题接到 Marin 的真实决策
+
+这份清单擅长解释机制，但面试还会问：团队怎么判断一个想法值得投入下一档算力？下面的案例把“论文的主张”拆成“可控实验、系统成本、上线门槛、反证”。Marin 代码、问题和 PR 会继续变化；这里记录的是 2026-09-22 可见证据。若要按周练习，使用[八周 Marin 决策案例本](./MARIN_LLM_TRAINING_STUDY_PLAN.md)；若要推导公式和练习面试题，使用[LLM 案例教程](./LLM_INTERVIEW_TUTORIAL_2026.md)。
+
+| 本指南主题 | Marin 原始材料 | 读完应该能判断什么 |
+|---|---|---|
+| Scaling law、MoE（第 4 节） | [535B-A23B hero 计划 #8435](https://github.com/marin-community/marin/issues/8435)、[快速 dense/MoE 实验 PR #9287](https://github.com/marin-community/marin/pull/9287) | 小规模、等数据量、等 FLOPs 分别回答什么？18T token 与上下文扩展是目标，不等于已完成的训练结果。 |
+| MoE 数值与优化器（第 4 节） | [梯度范数排查 #9148](https://github.com/marin-community/marin/issues/9148)、[#8435 的路由器精度检查](https://github.com/marin-community/marin/issues/8435) | 内部统计异常何时只需监控？20 步续训没有收益，不能证明新训练从头采用更高精度也无效。 |
+| 数据配比、污染（第 6 节） | [预训练 mixture 试验 #9126](https://github.com/marin-community/marin/issues/9126)、[SFT 重复与评测重叠审计 #9212](https://github.com/marin-community/marin/issues/9212) | 1.20× 是等吞吐假设下的 *compute-equivalent* 估计，不是实测墙钟加速；7.43% 是疑似重叠标记，不是已证实泄漏。 |
+| 长上下文、并行（第 2、3 节） | [context parallelism PR #9119](https://github.com/marin-community/marin/pull/9119)、[65k H100 诊断 #9277](https://github.com/marin-community/marin/issues/9277) | 262k 长度下完成 40 个训练 step 证明系统路径可运行，不证明模型具备 262k 长程利用能力；不同 batch 的 MFU 不构成单变量对比。 |
+| 评测协议（第 7、8 节） | [Eval Policy v0.1 #9193](https://github.com/marin-community/marin/issues/9193)、[标准误修正 PR #9196](https://github.com/marin-community/marin/pull/9196)、[生成预算修复 PR #9327](https://github.com/marin-community/marin/pull/9327) | 必须锁定样本、seed、推理模式、生成上限和 harness 版本；30 道题多次采样不等于新增独立题目。v0.1 仍是持续演进的协议。 |
+| SFT、RLVR、OPD（第 7 节） | [Snowball 能力对比 #9225](https://github.com/marin-community/marin/issues/9225)、[异步 RL #8936](https://github.com/marin-community/marin/issues/8936)、[OPD/MOPD 原型 #9250](https://github.com/marin-community/marin/issues/9250) | SWE-bench 提升能否和 TB2 回落并存？原始 reward 如何掩盖未完成答案？原型 parity 测试为何不是生产级训练结论？ |
+| 大规模训练可靠性（跨章节） | [hero checkpoint 交接 #8506](https://github.com/marin-community/marin/issues/8506)、[9 月 21 日 standup #9324](https://github.com/marin-community/marin/issues/9324) | 200-step loss overlap 是有边界的恢复证据；standup 是索引，不能直接当最终实验报告。 |
+
+建议每选一个案例都先写自己的预测，再看最终评论：**机制是什么？控制变量是什么？质量、吞吐、可靠性分别怎样？证据允许做哪个决策，又不允许推断什么？** 比增加一长串没有消化的新论文更有利于年底面试。
+
 ## 2026-09-22 更新记录
 
 相对 2026-08-24 版，这次更新包括：
@@ -544,7 +562,8 @@ Su 在 post-training 上没有像 RoPE 那样的完整长系列。可以这样�
 1. **科学空间**：加入“让炼丹更科学一些”第 8-10 篇，并把 AdaGrad 原论文接入优化器阅读线。
 2. **模型与架构**：加入 Qwen3.8-Next 的混合注意力、稀疏注意力与 Gated Residual 设计，以及 DeepSeek-V4.1-Flash 的 CED、CSA2、FP4 KV cache 和 SWA Bounded Replay；补上官方模型卡。
 3. **Post-training**：加入《Rethinking OPD II》，区分训练 query 的状态覆盖率和 student 对齐速度；修正第一篇《Rethinking OPD》的论文与代码链接。
-4. **路线**：同步长上下文、效率、优化器、OPD 的速览与实际阅读顺序。
+4. **Marin 实践**：加入 535B hero、数据与评测、长上下文、post-training 案例，明确各类结果的证据边界。
+5. **路线**：同步长上下文、效率、优化器、OPD 的速览与实际阅读顺序。
 
 ## 2026-08-24 更新记录
 

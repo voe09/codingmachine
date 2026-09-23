@@ -1,10 +1,12 @@
+<!-- markdownlint-disable MD013 -->
+
 # How Marin develops large models
 
 > For a broader interview curriculum that combines these cases with LLM theory, systems, post-training, inference, RAG, and agents, see [LLM interview tutorial](./LLM_INTERVIEW_TUTORIAL_2026.md).
 
-Research snapshot: 2026-08-23, Marin commit `e7c34f396f8f2780fc76bb60bcb7263900540534`.
+Research snapshot: **2026-09-22**, Marin commit [`0541426`](https://github.com/marin-community/marin/commit/054142676a0f11a589557131da3495de76038a1e). Historical examples remain dated; live issue status can change after this snapshot.
 
-Effort: medium. I traced current standups into experiment issues, retrospectives, reports, and the code that records experiment choices. I stopped when additional issue families repeated the same operating patterns without changing the ranked conclusions. Marin's Echo prior-work search was unavailable in this checkout because its runtime dependencies are not installed; the source ledger therefore uses durable public artifacts only.
+Method: trace dated standups into experiment issues, retrospectives, reports, PRs, and executable configs. The source ledger uses public artifacts; no private run telemetry was inspected. Conclusions are bounded by the cited evidence and the snapshot date.
 
 ## TL;DR
 
@@ -20,7 +22,21 @@ Marin's defining trait is **adaptive empiricism**. The team does not treat model
 
 The human traits behind that loop are empirical, scale-aware, systems-aware, skeptical of metrics, willing to discard failed ideas, and unusually candid about mistakes. The main tension is that their pragmatism sometimes weakens clean causal attribution: an expensive run may change data, hardware, schedule, and architecture together. Their later process adds stricter gates and small-scale comparisons to control that risk.
 
-You do not need to run the code to learn this. The best apprenticeship is to reconstruct their decision-making from issue chains and make your own prediction before reading each result.
+You do not need to run the code to learn this. The best apprenticeship is to reconstruct their decision-making from issue chains and make your own prediction before reading each result. The [eight-week casebook](./MARIN_LLM_TRAINING_STUDY_PLAN.md) turns this method into assignments.
+
+## What the September 2026 record changes
+
+The current [535B-A23B hero campaign #8435](https://github.com/marin-community/marin/issues/8435) targets 18T tokens, with a scale ladder and possible context-extension phases. These are plans, not evidence that every phase is complete. The [September 21 standup #9324](https://github.com/marin-community/marin/issues/9324) ties the run to context parallelism, checkpoint handoffs, faster ablation loops, SFT data integrity, RL weight sync, and evaluation policy. Read the linked issues before promoting a standup note to a result.
+
+| Trait in action | September evidence | Limit on the claim |
+|---|---|---|
+| Measure before changing a costly run | [Gradient-norm investigation #9148](https://github.com/marin-community/marin/issues/9148) traced the growing norm to `lm_head`; fixed-state probes did not justify a mid-run fix while loss/evals stayed stable. [Router arithmetic analysis in #8435](https://github.com/marin-community/marin/issues/8435) found changed top-8 order for 8.9853% of tokens, but no benefit in a 20-step continuation and a ~1.5–2% slowdown. | Neither short continuation proves the old numerics optimal for a fresh run. |
+| Discount model gains by real cost | [Mixture swap #9126](https://github.com/marin-community/marin/issues/9126) estimated 1.20× *compute-equivalent* progress at d1536, assuming equal throughput. [Coordinated GC PR #9224](https://github.com/marin-community/marin/pull/9224) measured 2.46% shorter elapsed time in a 300-step, 64-GPU diagnostic, but kept the feature opt-in. | Neither number is a production wall-clock or final model-quality result. |
+| Make data and eval auditable | [SFT overlap audit #9212](https://github.com/marin-community/marin/issues/9212) flagged 7.43% of conversations for possible evaluation overlap. [Eval Policy v0.1 #9193](https://github.com/marin-community/marin/issues/9193) specifies protocols and OOD protection; [protocol PR #9145](https://github.com/marin-community/marin/pull/9145) records uncertainty and completed counts. | A flag is not verified contamination; policy v0.1 is still a living proposal. |
+| Require multiple gates for scale | [Context-parallel PR #9119](https://github.com/marin-community/marin/pull/9119) ran 40 updates at 262k context; [65k H100 issue #9277](https://github.com/marin-community/marin/issues/9277) reports synthetic throughput diagnostics; [handoff #8506](https://github.com/marin-community/marin/issues/8506) checked 200-step parent/child loss overlap. | Finite training, MFU, and short loss continuity do not establish long-context capability or long-horizon equivalence. |
+| Preserve capability-specific regressions | [Snowball post-training comparison #9225](https://github.com/marin-community/marin/issues/9225) found SWE-bench gains with SFT+RL but a TB2 decline; [async RL #8936](https://github.com/marin-community/marin/issues/8936) exposed reward inflation from nonterminating answers. | Different trial counts/concurrency and benchmark domains prevent a universal winner claim. |
+
+The resulting habit is **bounded intervention**: ask what a diagnostic actually licenses, then make the smallest reversible production choice. A short benchmark, a merged implementation, and a final model result are three different evidence levels.
 
 ## The operating loop
 
@@ -61,7 +77,7 @@ Three loops are nested here:
 | 5 | Evaluation is an adversarial subsystem | Infrastructure failures and prompt sensitivity must be separated from capability changes | [Evaluation parity #7930](https://github.com/marin-community/marin/issues/7930) |
 | 6 | Models and systems are co-designed | Architecture, numerics, kernels, topology, and checkpoint recovery jointly determine viability | [Launch readiness #8233](https://github.com/marin-community/marin/issues/8233) |
 | 7 | Negative results are useful output | Failed routers, optimizers, regularizers, and run mistakes remain visible and influence defaults | [Agent MoE digest](https://github.com/marin-community/marin/blob/main/docs/reports/agent-moe-experiments.md), [z-loss #935](https://github.com/marin-community/marin/issues/935) |
-| 8 | Coordination is part of the science | Weekly standups connect many narrow workstreams to one candidate training recipe | [August 17 standup #8394](https://github.com/marin-community/marin/issues/8394) |
+| 8 | Coordination is part of the science | Weekly standups connect many narrow workstreams to one candidate training recipe | [September 21 standup #9324](https://github.com/marin-community/marin/issues/9324) |
 
 ### 1. They develop a campaign, not a frozen recipe
 
@@ -131,7 +147,7 @@ What to learn:
 
 ### 6. They co-design model, numerics, and distributed systems
 
-At large scale, a modeling choice is incomplete until it has a stable numerical implementation and acceptable topology behavior. The current launch contract spans architecture, loss behavior, throughput, rack scaling, checkpoint save and restore, data identity, alerts, and a named owner. This is why standups interleave MoE routing, Pallas kernels, all-to-all communication, checkpointing, telemetry, mixtures, and evaluations.
+At large scale, a modeling choice is incomplete until it has a stable numerical implementation and acceptable topology behavior. The earlier [launch-readiness issue #8233](https://github.com/marin-community/marin/issues/8233) set gates across architecture, loss behavior, throughput, rack scaling, checkpoint save and restore, data identity, alerts, and ownership; the [current hero campaign #8435](https://github.com/marin-community/marin/issues/8435) shows how those gates continue into operation. This is why standups interleave MoE routing, Pallas kernels, all-to-all communication, checkpointing, telemetry, mixtures, and evaluations.
 
 The 32B run demonstrates the diagnostic side. Clipping and step skipping softened loss spikes but did not remove the cause. Optimizer changes briefly stabilized training and then failed. QK-Norm caused a short penalty but ultimately removed the spikes. The reusable lesson is to instrument enough internal behavior to distinguish a symptom treatment from a structural fix.
 
@@ -247,8 +263,8 @@ Produce two checklists: a data-integrity gate and an evaluation-integrity gate. 
 
 Read:
 
-- [August 17 standup #8394](https://github.com/marin-community/marin/issues/8394);
-- [hero-run readiness #8233](https://github.com/marin-community/marin/issues/8233);
+- [September 21 standup #9324](https://github.com/marin-community/marin/issues/9324);
+- [hero-run readiness history #8233](https://github.com/marin-community/marin/issues/8233) and [current hero campaign #8435](https://github.com/marin-community/marin/issues/8435);
 - [throughput tracker #7201](https://github.com/marin-community/marin/issues/7201);
 - current linked architecture, data, evaluation, and reliability issues.
 
@@ -316,7 +332,7 @@ The information cutoff is essential. It prevents hindsight from turning a diffic
 | Wall-clock time-to-quality is a core objective | #1183, #7201, and Agent MoE effective-speedup accounting | Throughput measurements can be hardware-specific | High | Recalculate one break-even point |
 | Data behavior is inseparable from model behavior | 32B contamination and shuffle failures; #6037 | Some mixture findings are task- and scale-dependent | High | Write data-integrity gates before reading outcomes |
 | Evaluation failures can masquerade as model failures | #7930 and retrospective prompt-format failures | A clean harness does not guarantee benchmark validity | High | Separate generation, serving, parsing, and scoring |
-| The process has become more formal over time | Contrast early 8B run with current #8233 and Agent MoE gates | Current process is still evolving; not every issue follows it | Medium-high | Compare the two eras explicitly |
+| The process has become more formal over time | Contrast early 8B run with #8233, current #8435, and Agent MoE gates | Process is still evolving; not every issue follows it | Medium-high | Compare the two eras explicitly |
 | Public issues fully capture the process | Standups and issue chains expose substantial process knowledge | Some issues are terse; W&B, PRs, and reports carry missing context | Low | Triangulate every major claim across artifact types |
 
 ## Source ledger
@@ -329,10 +345,12 @@ The information cutoff is essential. It prevents hindsight from turning a diffic
 | [Marin 32B retrospective](https://github.com/marin-community/marin/blob/main/docs/reports/marin-32b-retro.md) | Instability diagnosis, QK-Norm, data contamination, and shuffle failure | Strong failure analysis |
 | [Agent MoE digest](https://github.com/marin-community/marin/blob/main/docs/reports/agent-moe-experiments.md) | 80 controlled screens with worked, mixed, negative, and incomplete outcomes | Curated current snapshot; individual issues remain primary |
 | [ISO-FLOP #8003](https://github.com/marin-community/marin/issues/8003) | Scaling-grid design, extrapolation caveats, divergence, and stopping obsolete cells | Direct experiment thread |
-| [Hero-run readiness #8233](https://github.com/marin-community/marin/issues/8233) | Current integration contract and launch gates | Direct current process record |
+| [Hero-run readiness #8233](https://github.com/marin-community/marin/issues/8233) | Earlier integration contract and launch gates | Direct historical process record |
 | [Evaluation parity #7930](https://github.com/marin-community/marin/issues/7930) | Separation of infrastructure-clean runs from model results | Direct experiment thread |
 | [SFT pipeline #8225](https://github.com/marin-community/marin/issues/8225) | Sequential post-training decisions with both gains and regressions | Direct program synthesis |
-| [August 17 standup #8394](https://github.com/marin-community/marin/issues/8394) | Current cross-functional work and blockers | Current index; follow links for evidence |
+| [September 21 standup #9324](https://github.com/marin-community/marin/issues/9324) | Current cross-functional work and blockers | Current index; follow links for evidence |
+| [Hero campaign #8435](https://github.com/marin-community/marin/issues/8435) and [handoff #8506](https://github.com/marin-community/marin/issues/8506) | Production target, numerical decision, run lineage, and continuity checks | Primary operational record; planned phases are not completed results |
+| [Mixture #9126](https://github.com/marin-community/marin/issues/9126), [SFT audit #9212](https://github.com/marin-community/marin/issues/9212), [Eval Policy #9193](https://github.com/marin-community/marin/issues/9193) | September data and measurement cases | Different evidence levels; retain each caveat |
 | [Delphi report](https://openathena.ai/blog/delphi/) | Public explanation of preregistered scaling forecasts | Curated external-facing synthesis |
 | [Open development of frontier AI](https://openathena.ai/blog/open-development-of-frontier-ai/) | Marin's stated reason for publishing process knowledge as well as weights | Mission statement; not evidence that every record is complete |
 
