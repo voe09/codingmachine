@@ -6,7 +6,7 @@ Replace selective channel notes in `hc/marin-discord/` with learning-focused sum
 
 ## Source and current state
 
-The local public-archive export from September 22, 2026 contains 36,257 messages. It excludes private, deleted, or unindexed messages. Some image-only posts have expired attachments. The README identifies the seven channels whose exported message bodies have been reviewed end to end: `data-rewriting`, `mtp`, `train-test-overlap`, `tokenizer`, `scaling-suite`, `sft-agents`, and `optimizers` (877 archived messages in those channels). All other channel files remain selective, even where later gaps have been filled.
+The local public-archive export from September 22, 2026 contains 36,257 messages. It excludes private, deleted, or unindexed messages. Some image-only posts have expired attachments. The README identifies the eight channels whose exported message bodies have been reviewed end to end: `data-rewriting`, `mtp`, `train-test-overlap`, `tokenizer`, `scaling-suite`, `sft-agents`, `optimizers`, and `data-curation` (1,780 archived messages in those channels). All other channel files remain selective, even where later gaps have been filled.
 
 The live archive has changed since the export. Finish the frozen snapshot first, then refresh and review messages added after it. Do not change an archive-size header or claim full current-server coverage based on the older export.
 
@@ -19,4 +19,4 @@ The live archive has changed since the export. Finish the frozen snapshot first,
 
 ## Next batches
 
-Prioritize channels with large research discussions: `data-curation`, `data-mixing`, `evals`, `scaling-laws`, `inference`, `moe`, `reinforcement-learning`, `marin-32b`, `speedrun`, `levanter`, and `infra`. `infra` and `reinforcement-learning` have already received selective expansions; they still need chronological review. Work through the smaller remaining technical channels afterward, using the README as the channel inventory. The forum pages require a separate UI audit because the export lacks complete forum topology.
+Prioritize channels with large research discussions: `data-mixing`, `evals`, `scaling-laws`, `inference`, `moe`, `reinforcement-learning`, `marin-32b`, `speedrun`, `levanter`, and `infra`. `infra` and `reinforcement-learning` have already received selective expansions; they still need chronological review. Work through the smaller remaining technical channels afterward, using the README as the channel inventory. The forum pages require a separate UI audit because the export lacks complete forum topology.
