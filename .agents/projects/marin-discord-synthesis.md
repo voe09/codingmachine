@@ -6,7 +6,7 @@ Replace selective channel notes in `hc/marin-discord/` with learning-focused sum
 
 ## Source and current state
 
-The local public-archive export from September 22, 2026 contains 36,257 messages. It excludes private, deleted, or unindexed messages. Some bodyless posts have attachments unavailable in the text export. The README identifies the sixteen channels whose exported message bodies have been reviewed end to end: `data-rewriting`, `mtp`, `train-test-overlap`, `tokenizer`, `scaling-suite`, `sft-agents`, `optimizers`, `data-curation`, `data-mixing`, `evals`, `scaling-laws`, `inference`, `moe`, `reinforcement-learning`, `marin-32b`, and `speedrun` (10,764 archived messages in those channels). All other channel files remain selective, even where later gaps have been filled.
+The local public-archive export from September 22, 2026 contains 36,257 messages. It excludes private, deleted, or unindexed messages. Some bodyless posts have attachments unavailable in the text export. The README identifies the seventeen channels whose exported message bodies have been reviewed end to end: `data-rewriting`, `mtp`, `train-test-overlap`, `tokenizer`, `scaling-suite`, `sft-agents`, `optimizers`, `data-curation`, `data-mixing`, `evals`, `scaling-laws`, `inference`, `moe`, `reinforcement-learning`, `marin-32b`, `speedrun`, and `levanter` (11,589 archived messages in those channels). All other channel files remain selective, even where later gaps have been filled.
 
 The live archive has changed since the export. Finish the frozen snapshot first, then refresh and review messages added after it. Do not change an archive-size header or claim full current-server coverage based on the older export.
 
@@ -19,4 +19,4 @@ The live archive has changed since the export. Finish the frozen snapshot first,
 
 ## Next batches
 
-Prioritize channels with large research discussions: `levanter` and `infra`. `infra` has already received a selective expansion but still needs chronological review. Work through the smaller remaining technical channels afterward, using the README as the channel inventory. The forum pages require a separate UI audit because the export lacks complete forum topology.
+Prioritize `infra`, which has already received a selective expansion but still needs chronological review. Work through the smaller remaining technical channels afterward, using the README as the channel inventory. The forum pages require a separate UI audit because the export lacks complete forum topology.
