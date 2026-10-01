@@ -19,4 +19,4 @@ The live archive has changed since the export. Finish the frozen snapshot first,
 
 ## Next batches
 
-Prioritize `infra`. Its April 2025–January 2026 messages (4,810) have now been reviewed chronologically and incorporated; February 2026 onward remains selective. Work through the smaller remaining technical channels afterward, using the README as the channel inventory. The forum pages require a separate UI audit because the export lacks complete forum topology.
+Prioritize `infra`. Its April 2025–February 2026 messages (5,288) have now been reviewed chronologically and incorporated; March 2026 onward remains selective. Work through the smaller remaining technical channels afterward, using the README as the channel inventory. The forum pages require a separate UI audit because the export lacks complete forum topology.
