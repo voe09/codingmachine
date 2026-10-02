@@ -2,9 +2,9 @@
 
 # 科学空间 + SOTA LLM 阅读路线
 
-更新日期：**2026-09-22**
+更新日期：**2026-10-01**
 
-资料截点：外部论文与模型报告的选读清单、Marin 实践案例均截至 **2026-09-22**。`前沿`条目优先采用论文、技术报告、官方博客、模型卡和官方仓库；新近工作的证据还在积累，阅读时要把作者自报结果和独立复现分开看。这是一份精选路线，不是对所有 9 月新论文的全面盘点。
+资料截点：外部论文与模型报告的选读清单截至 **2026-09-22**；Marin 实践案例截至 **2026-10-01**。`前沿`条目优先采用论文、技术报告、官方博客、模型卡和官方仓库；新近工作的证据还在积累，阅读时要把作者自报结果和独立复现分开看。这是一份精选路线，不是对所有新论文的全面盘点。
 
 这份文档的目标，不再是“先看 Su，再看站外论文”，而是把它们**揉成一条可执行的阅读路线**。  
 核心思路是：
@@ -536,6 +536,27 @@ Su 在 post-training 上没有像 RoPE 那样的完整长系列。可以这样�
 18. [Qwen3.8-Next 架构报告](https://arxiv.org/abs/2608.30320)
 19. [DeepSeek-V4.1-Flash](https://arxiv.org/abs/2609.19969)
 20. [Qwen-AgentWorld](https://arxiv.org/abs/2606.24597)
+
+---
+
+## 2026-10-01：Marin 研发案例续篇
+
+9 月 21 日的 [standup #9324](https://github.com/marin-community/marin/issues/9324) 仍是本次截点的最新周会索引；下面的更新来自之后的实验 issue、生产交接和已合并 PR。按[八周案例本](./MARIN_LLM_TRAINING_STUDY_PLAN.md)练习时，先读实验目标，再读结果与后续评论，保留当时尚未解决的问题。
+
+| 对应主题 | 新证据 | 面试时应说清的边界 |
+|---|---|---|
+| Scaling law、MoE（第 4 节） | [Marin Belay #9451](https://github.com/marin-community/marin/issues/9451) 用 8×H100、8 分钟训练 step 时间（不计编译和评测）筛选 d512，再检查 d768–d1280 和 1e24 FLOP 外推。 | 固定时间下的优势可能来自更多训练 token；d512 步数不同、拟合渐近值固定，hero 规模训练与推理吞吐不在 v1 门槛内。 |
+| 长上下文、MoE 系统（第 2、4 节） | [hero 4K/8K/16K 诊断 #9615](https://github.com/marin-community/marin/issues/9615) 固定每步 4.19M token：8K/16K 相对 4K 的 tokens/s 分别低 1.6%/3.1%，专家丢弃比例升至 4.5×/16×。 | QK 系数也随长度变化；每组只有单机架、3 seed、100 步。16K 生产切换与长上下文能力尚未由此证明。 |
+| 生产运行可靠性（跨章节） | [原生 SM100 FA4 交接 PR #9378](https://github.com/marin-community/marin/pull/9378) 与 [hero 交接记录 #8506](https://github.com/marin-community/marin/issues/8506)：200 步 11 机架重叠验收后，tokens/s 从 2.83M 到 3.14M。 | 后续 checkpoint 遇到存储配额和保存停滞；加速、loss 连续性与长期恢复能力是不同门槛。 |
+| 评测协议与长文本任务（第 2、7、8 节） | [9 月 24 日 Eval Policy #9409](https://github.com/marin-community/marin/issues/9409)、[已合并的 verified-cohort 门禁 #9461](https://github.com/marin-community/marin/pull/9461)、[GraphWalks #9562](https://github.com/marin-community/marin/issues/9562)。GraphWalks 在相同 750 题上把输出预算加倍，Grug F1 从 0.073689 到 0.144746。 | 原始全量分母为 920，复跑为 750；不能直接比两个总分。新运行仍有 636/750 个输出触及长度上限并解析失败。[9 月 29 日政策 #9566](https://github.com/marin-community/marin/issues/9566)仍是草案。 |
+| SFT 的能力转移（第 7、8 节） | [MRCR 诊断 #9519](https://github.com/marin-community/marin/issues/9519)发现 SFT 后干扰项中的 teacher-forced needle recovery 下降 9.57 个百分点；[agentic SFT #9582](https://github.com/marin-community/marin/issues/9582)在 68 道 OT-TB-Lite 配对任务上把 pass@1 从 0.118 提到 0.255。 | MRCR 的具体原因和生成式得分关系未确定；Terminal-Bench 2.0/2.1 的改善区间仍跨零，不能把 OT-TB-Lite 的收益推广到所有 agent 任务。 |
+| RLVR（第 7 节） | [已封存的 Snowball 混合领域实验 #9359](https://github.com/marin-community/marin/issues/9359)公开了模型和实验资料；RLVR1 有早期学习，RLVR2 的 holdout 持平或回退。 | sync/async 对比受到早期推理桥过载和 holdout 分母变化影响；未完成答案及 verifier 合同不匹配使若干领域训练信号失真。 |
+
+这轮案例特别适合练习一句话判断：**哪些是已经完成的生产观察，哪些只是小规模筛选、评测协议或下一步提案？**
+
+## 2026-10-01 更新记录
+
+加入固定时间 scaling ladder、hero 上下文切换与生产交接、版本化评测、长文本解析/SFT 回退，以及 RLVR 封存结果。外部论文选读清单仍以 2026-09-22 为截点。
 
 ---
 

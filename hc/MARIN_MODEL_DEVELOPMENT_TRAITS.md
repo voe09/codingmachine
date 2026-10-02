@@ -4,7 +4,7 @@
 
 > For a broader interview curriculum that combines these cases with LLM theory, systems, post-training, inference, RAG, and agents, see [LLM interview tutorial](./LLM_INTERVIEW_TUTORIAL_2026.md).
 
-Research snapshot: **2026-09-22**, Marin commit [`0541426`](https://github.com/marin-community/marin/commit/054142676a0f11a589557131da3495de76038a1e). Historical examples remain dated; live issue status can change after this snapshot.
+Research snapshot: **2026-10-01**, Marin commit [`f5693b8`](https://github.com/marin-community/marin/commit/f5693b8671c340ac48207a603470e44b5dbb952d). Historical examples remain dated; live issue status can change after this snapshot.
 
 Method: trace dated standups into experiment issues, retrospectives, reports, PRs, and executable configs. The source ledger uses public artifacts; no private run telemetry was inspected. Conclusions are bounded by the cited evidence and the snapshot date.
 
@@ -24,19 +24,19 @@ The human traits behind that loop are empirical, scale-aware, systems-aware, ske
 
 You do not need to run the code to learn this. The best apprenticeship is to reconstruct their decision-making from issue chains and make your own prediction before reading each result. The [eight-week casebook](./MARIN_LLM_TRAINING_STUDY_PLAN.md) turns this method into assignments.
 
-## What the September 2026 record changes
+## What the late September–October 1 record adds
 
-The current [535B-A23B hero campaign #8435](https://github.com/marin-community/marin/issues/8435) targets 18T tokens, with a scale ladder and possible context-extension phases. These are plans, not evidence that every phase is complete. The [September 21 standup #9324](https://github.com/marin-community/marin/issues/9324) ties the run to context parallelism, checkpoint handoffs, faster ablation loops, SFT data integrity, RL weight sync, and evaluation policy. Read the linked issues before promoting a standup note to a result.
+The [535B-A23B hero campaign #8435](https://github.com/marin-community/marin/issues/8435) still targets 18T tokens. The last labeled standup at this cutoff is [September 21 #9324](https://github.com/marin-community/marin/issues/9324); subsequent experiment threads and merged PRs carry the newer decisions. Its context-extension phases remain plans until their handoffs and capability evaluations complete.
 
-| Trait in action | September evidence | Limit on the claim |
+| Trait in action | New evidence | Boundary |
 |---|---|---|
-| Measure before changing a costly run | [Gradient-norm investigation #9148](https://github.com/marin-community/marin/issues/9148) traced the growing norm to `lm_head`; fixed-state probes did not justify a mid-run fix while loss/evals stayed stable. [Router arithmetic analysis in #8435](https://github.com/marin-community/marin/issues/8435) found changed top-8 order for 8.9853% of tokens, but no benefit in a 20-step continuation and a ~1.5–2% slowdown. | Neither short continuation proves the old numerics optimal for a fresh run. |
-| Discount model gains by real cost | [Mixture swap #9126](https://github.com/marin-community/marin/issues/9126) estimated 1.20× *compute-equivalent* progress at d1536, assuming equal throughput. [Coordinated GC PR #9224](https://github.com/marin-community/marin/pull/9224) measured 2.46% shorter elapsed time in a 300-step, 64-GPU diagnostic, but kept the feature opt-in. | Neither number is a production wall-clock or final model-quality result. |
-| Make data and eval auditable | [SFT overlap audit #9212](https://github.com/marin-community/marin/issues/9212) flagged 7.43% of conversations for possible evaluation overlap. [Eval Policy v0.1 #9193](https://github.com/marin-community/marin/issues/9193) specifies protocols and OOD protection; [protocol PR #9145](https://github.com/marin-community/marin/pull/9145) records uncertainty and completed counts. | A flag is not verified contamination; policy v0.1 is still a living proposal. |
-| Require multiple gates for scale | [Context-parallel PR #9119](https://github.com/marin-community/marin/pull/9119) ran 40 updates at 262k context; [65k H100 issue #9277](https://github.com/marin-community/marin/issues/9277) reports synthetic throughput diagnostics; [handoff #8506](https://github.com/marin-community/marin/issues/8506) checked 200-step parent/child loss overlap. | Finite training, MFU, and short loss continuity do not establish long-context capability or long-horizon equivalence. |
-| Preserve capability-specific regressions | [Snowball post-training comparison #9225](https://github.com/marin-community/marin/issues/9225) found SWE-bench gains with SFT+RL but a TB2 decline; [async RL #8936](https://github.com/marin-community/marin/issues/8936) exposed reward inflation from nonterminating answers. | Different trial counts/concurrency and benchmark domains prevent a universal winner claim. |
+| Promote code with a production overlap | The [native SM100 FA4 handoff #9378](https://github.com/marin-community/marin/pull/9378) first matched loss over 20 one-rack updates; the [step-146139 handoff #8506](https://github.com/marin-community/marin/issues/8506) then accepted a 200-step 11-rack overlap. Tokens/s rose from 2.83M to 3.14M. | The handoff later encountered checkpoint-storage suspension and stalls. Faster training did not remove recovery risk. |
+| Buy evidence at several budgets | [Marin Belay #9451](https://github.com/marin-community/marin/issues/9451) uses an eight-minute 8×H100 d512 gate, then d768–d1280 checks and a fitted 1e24-FLOP projection. | The d512 point uses a different step count, the fit fixes its asymptote, and hero-scale training/serving speed is outside the gate. |
+| Test a context switch as a coupled intervention | [Hero context diagnostics #9615](https://github.com/marin-community/marin/issues/9615) held 4.19M tokens/update fixed: 8K and 16K lost 1.6% and 3.1% tokens/s against 4K, while expert-drop fractions rose 4.5× and 16×. | QK scaling changed with context; each arm ran 100 steps on one rack. A 16K production switch and long-context capability are unproven. |
+| Version the evaluation contract | [September 24 policy #9409](https://github.com/marin-community/marin/issues/9409) and [verified-cohort PR #9461](https://github.com/marin-community/marin/pull/9461) pin benchmark settings and reject nonconforming runs. [GraphWalks #9562](https://github.com/marin-community/marin/issues/9562) shows output-budget truncation can dominate a score. | The [September 29 policy #9566](https://github.com/marin-community/marin/issues/9566) is a draft with unresolved roster and config inconsistencies; compare GraphWalks on matched examples. |
+| Keep post-training regressions visible | [Agentic SFT #9582](https://github.com/marin-community/marin/issues/9582) improved OT-TB-Lite pass@1 by 0.137 on 68 paired tasks; Terminal-Bench intervals include zero. [MRCR #9519](https://github.com/marin-community/marin/issues/9519) found a 9.57-point teacher-forced distractor-recovery drop after SFT. [Mixed RLVR #9359](https://github.com/marin-community/marin/issues/9359) learned in RLVR1 but was flat to regressing on RLVR2 holdout. | Harness, task set, checkpoint lineage, and verifier failures limit cross-domain conclusions; the MRCR cause is unresolved. |
 
-The resulting habit is **bounded intervention**: ask what a diagnostic actually licenses, then make the smallest reversible production choice. A short benchmark, a merged implementation, and a final model result are three different evidence levels.
+The recurring habit is **bounded intervention**: a diagnostic licenses the next test or a specific handoff gate, not every downstream quality claim. A merged implementation, a short overlap, and a long-horizon model result carry different evidence.
 
 ## The operating loop
 
@@ -255,7 +255,9 @@ Read:
 - data sections of the 8B and 32B retrospectives;
 - [DataKit hero run #6037](https://github.com/marin-community/marin/issues/6037);
 - [evaluation parity #7930](https://github.com/marin-community/marin/issues/7930);
-- [SFT pipeline #8225](https://github.com/marin-community/marin/issues/8225).
+- [SFT pipeline #8225](https://github.com/marin-community/marin/issues/8225);
+- [September 24 Eval Policy #9409](https://github.com/marin-community/marin/issues/9409)
+  and [agentic SFT results #9582](https://github.com/marin-community/marin/issues/9582).
 
 Produce two checklists: a data-integrity gate and an evaluation-integrity gate. Include a rule for mixed results: #8225 reports 30 improving and 21 regressing sequential comparisons, so your summary must retain task-level tradeoffs.
 
@@ -277,7 +279,11 @@ Write a one-page **launch / do not launch** memo using only evidence that existe
 - stop conditions;
 - the first three dashboards you would watch.
 
-Afterward, follow later standups and revise the memo. This is the closest no-compute exercise to participating in the development program.
+Afterward, read the later [context-switch diagnostics #9615](https://github.com/marin-community/marin/issues/9615)
+and [step-146139 handoff #8506](https://github.com/marin-community/marin/issues/8506),
+then revise the memo. Keep the post-standup evidence out of the original
+decision. This is the closest no-compute exercise to participating in the
+development program.
 
 ## The decision-notebook template
 
@@ -348,9 +354,12 @@ The information cutoff is essential. It prevents hindsight from turning a diffic
 | [Hero-run readiness #8233](https://github.com/marin-community/marin/issues/8233) | Earlier integration contract and launch gates | Direct historical process record |
 | [Evaluation parity #7930](https://github.com/marin-community/marin/issues/7930) | Separation of infrastructure-clean runs from model results | Direct experiment thread |
 | [SFT pipeline #8225](https://github.com/marin-community/marin/issues/8225) | Sequential post-training decisions with both gains and regressions | Direct program synthesis |
-| [September 21 standup #9324](https://github.com/marin-community/marin/issues/9324) | Current cross-functional work and blockers | Current index; follow links for evidence |
+| [September 21 standup #9324](https://github.com/marin-community/marin/issues/9324) | Last labeled cross-functional standup at this cutoff | Historical index; follow later issues for current evidence |
 | [Hero campaign #8435](https://github.com/marin-community/marin/issues/8435) and [handoff #8506](https://github.com/marin-community/marin/issues/8506) | Production target, numerical decision, run lineage, and continuity checks | Primary operational record; planned phases are not completed results |
 | [Mixture #9126](https://github.com/marin-community/marin/issues/9126), [SFT audit #9212](https://github.com/marin-community/marin/issues/9212), [Eval Policy #9193](https://github.com/marin-community/marin/issues/9193) | September data and measurement cases | Different evidence levels; retain each caveat |
+| [Marin Belay #9451](https://github.com/marin-community/marin/issues/9451) and [hero context diagnostics #9615](https://github.com/marin-community/marin/issues/9615) | Current small-scale promotion and production context-switch gates | Fixed-time fit and one-rack results need larger-scale validation |
+| [September 24 policy #9409](https://github.com/marin-community/marin/issues/9409), [verified cohorts #9461](https://github.com/marin-community/marin/pull/9461), [GraphWalks #9562](https://github.com/marin-community/marin/issues/9562) | Versioned evaluation rules and an output-budget failure case | September 29 revision is draft; compare matched coverage |
+| [Agentic SFT #9582](https://github.com/marin-community/marin/issues/9582), [MRCR #9519](https://github.com/marin-community/marin/issues/9519), [RLVR #9359](https://github.com/marin-community/marin/issues/9359) | Capability-specific gains and regressions across post-training | No universal improvement claim follows |
 | [Delphi report](https://openathena.ai/blog/delphi/) | Public explanation of preregistered scaling forecasts | Curated external-facing synthesis |
 | [Open development of frontier AI](https://openathena.ai/blog/open-development-of-frontier-ai/) | Marin's stated reason for publishing process knowledge as well as weights | Mission statement; not evidence that every record is complete |
 
