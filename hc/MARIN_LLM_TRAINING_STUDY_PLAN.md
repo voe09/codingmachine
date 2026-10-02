@@ -1,6 +1,6 @@
 # Learn model development by following Marin's decisions
 
-Research snapshot: **2026-09-22**. The
+Research snapshot: **2026-10-01**. The
 [Marin repository](https://github.com/marin-community/marin) moves quickly;
 issue status and run claims below describe what was public at this cutoff, not a
 permanent verdict. For LLM theory and interview derivations, use the
@@ -68,8 +68,8 @@ it?” Read only the slice needed for the current decision.
 | What is the current hero shape? | [535B MoE runbook](https://github.com/marin-community/marin/blob/main/experiments/grug/moe_hero_ep/README.md), [hero issue #8435](https://github.com/marin-community/marin/issues/8435) | 384 routed experts/top-8, shared experts, sequence length, rack topology, precision, gates |
 
 Do not treat `main` as a time machine. Pin a commit when reconstructing a
-historical decision; the September snapshot inspected
-[Marin commit `0541426`](https://github.com/marin-community/marin/commit/054142676a0f11a589557131da3495de76038a1e).
+historical decision; this snapshot inspected
+[Marin commit `f5693b8`](https://github.com/marin-community/marin/commit/f5693b8671c340ac48207a603470e44b5dbb952d).
 
 ## Eight-week casebook
 
@@ -98,17 +98,22 @@ valuable checkpoint instead of starting over?”
 Read the
 [hero iso-FLOP sweep #8003](https://github.com/marin-community/marin/issues/8003),
 [fast-track experiment framework PR #9287](https://github.com/marin-community/marin/pull/9287),
-and the
-[feature-ablation proposal #9288](https://github.com/marin-community/marin/issues/9288).
+and the active
+[Marin Belay ladder #9451](https://github.com/marin-community/marin/issues/9451).
 Derive approximate dense training FLOPs `6ND`; explain why active parameters,
 routing, attention length, and hardware utilization complicate the MoE version.
-Compare **data-matched** and **compute-matched** experiments. PR #9287 provides
-a 16k-BPE dense/MoE ladder at several widths; #9288 is a proposed screen, not a
-result.
+Compare **data-matched**, **compute-matched**, and **fixed wall-clock**
+experiments. PR #9287 provides the 16k-BPE dense/MoE ladder. Belay v1 selects
+variants by Paloma macro loss after eight minutes of 8×H100 train-step time at
+d512, then checks d768–d1280 and an extrapolated 1e24-FLOP point. Its current
+candidate improves the measured small rungs, but d512 uses a different step
+count and the 1e24 projection assumes a fixed loss asymptote. Hero-scale
+training and inference throughput are outside this gate.
 
 **Deliverable:** an experiment plan with two widths, equalized budget, promotion
-threshold, and a rule for abandoning obsolete cells. **Interview test:** “A d512
-win disappears at d1024. What do you infer?”
+threshold, and a rule for abandoning obsolete cells. Calculate how a fixed-time
+win can arise from more tokens rather than a better per-token model. **Interview
+test:** “A d512 win disappears at d1024. What do you infer?”
 
 ### Week 3 — Architecture, numerics, and runtime are one decision
 
@@ -152,58 +157,72 @@ training data while a benchmark still appears to improve?”
 
 Read
 [context-parallel training PR #9119](https://github.com/marin-community/marin/pull/9119),
-[65k H100 diagnostics #9277](https://github.com/marin-community/marin/issues/9277),
+[4K/8K/16K hero diagnostics #9615](https://github.com/marin-community/marin/issues/9615),
 and
 [checkpoint handoff #8506](https://github.com/marin-community/marin/issues/8506).
 PR #9119 reached 40 diagnostic updates at 262k context on 64 GB200 GPUs, with
-~10.03% median MFU; it did not establish long-context task quality. #9277
-reports 65k synthetic diagnostics with different batch sizes and parallel
-layouts, so its MFU figures are not an isolated context-parallel speed
-comparison. The hero handoff used a 200-step parent/child loss-overlap check and
-checkpoint lineage; that establishes a narrower continuity claim than “the
-entire future run is reproduced.”
+~10.03% median MFU; it did not establish long-context task quality. #9615
+restored the hero step-180000 checkpoint on one rack for three 100-step arms at
+the same 4.19M tokens/update. Relative to 4K, 8K lost 1.6% tokens/s and 16K
+lost 3.1%, while expert-drop fractions rose 4.5× and 16×. Sequence length and
+QK scaling changed together; one-rack drops and 100-step stability do not
+predict the 11-rack continuation. The [step-146139 cutover in #8506](https://github.com/marin-community/marin/issues/8506)
+passed a 200-step overlap and improved observed 11-rack tokens/s from 2.83M to
+3.14M, but later checkpoint stalls show why a good performance handoff still
+needs storage and recovery gates.
 
-**Deliverable:** a table with five distinct gates: fits in memory, finite steps,
-throughput, loss continuity, and long-context capability. **Interview test:**
-“Why is a 262k training step insufficient evidence that the model uses 262k
-context?”
+**Deliverable:** a table with six distinct gates: memory, finite steps,
+throughput, loss continuity, expert drops, and long-context capability.
+**Interview test:** “Would you switch the hero directly to 16K
+from these diagnostics? What must be rehearsed first?”
 
 ### Week 6 — Evaluation is an experimental protocol
 
 Read
-[Eval Policy v0.1 #9193](https://github.com/marin-community/marin/issues/9193),
-[benchmark protocol PR #9145](https://github.com/marin-community/marin/pull/9145),
-[standard-error fix PR #9196](https://github.com/marin-community/marin/pull/9196),
-and
-[Harbor output-budget fix PR #9327](https://github.com/marin-community/marin/pull/9327).
+[September 24 Eval Policy #9409](https://github.com/marin-community/marin/issues/9409),
+[verified-cohort gate PR #9461](https://github.com/marin-community/marin/pull/9461),
+[GraphWalks failure analysis #9562](https://github.com/marin-community/marin/issues/9562),
+and [MRCR distractor study #9519](https://github.com/marin-community/marin/issues/9519).
 Specify the benchmark split, model checkpoint, prompt and reasoning mode,
 generation budget, metric, seeds, attempted/full counts, and confidence interval
-_before_ a comparison. Policy v0.1 remains a living issue, not an immutable
-standard. AIME repeats over 30 items do not create 300 independent questions.
+_before_ a comparison. The September 24 policy has pinned verified cohorts;
+the [September 29 revision #9566](https://github.com/marin-community/marin/issues/9566)
+is still a draft with open consistency questions. In GraphWalks, doubling the
+output budget raised Grug's F1 from 0.073689 to 0.144746 on the **same 750
+examples**; the original and rerun totals covered 920 and 750 examples, so
+their overall scores cannot be compared directly. The MRCR probe found a
+9.57-point drop in teacher-forced needle recovery amid distractors after SFT,
+with isolated needle gain unchanged. Neither probe establishes the cause of
+the model's generated long-context errors.
 
 **Deliverable:** a one-page evaluation protocol and an example of how a serving
 or harness change could masquerade as a model improvement. **Interview test:**
-“A capped run scores higher. Can it replace the full result?”
+“The output budget doubles and F1 rises, but fewer examples fit the context
+window. What is the valid comparison?”
 
 ### Week 7 — Post-training optimizes a narrower distribution
 
 Read
 [Snowball comparison #9225](https://github.com/marin-community/marin/issues/9225),
-[async RL investigation #8936](https://github.com/marin-community/marin/issues/8936),
-[successor program #8955](https://github.com/marin-community/marin/issues/8955),
-and
-[OPD/MOPD prototype #9250](https://github.com/marin-community/marin/issues/9250).
+[agentic SFT study #9582](https://github.com/marin-community/marin/issues/9582),
+and [sealed mixed-domain RLVR campaign #9359](https://github.com/marin-community/marin/issues/9359).
 In #9225, SFT+RL scored 0.307 on the sampled SWE-bench Verified set versus 0.145
 for its “base,” yet TB2 fell from 0.094 to 0.050. That “base” is already a
 Stage-3 SFT checkpoint, not raw pretraining. Different trial counts and
-concurrency prevent a clean universal ranking. In #8936, raw GSM8K reward hid
-nontermination; completed-answer rate changed the interpretation. The OPD/MOPD
-work is preliminary parity/prototype evidence, not a demonstrated general
-replacement for RL.
+concurrency prevent a clean universal ranking. In #9582, MiniSweAgent-format
+SFT raised pass@1 on the same 68 OT-TB-Lite tasks from 0.118 to 0.255 across
+three seeds, a paired +0.137 [0.083, 0.196]. Terminal-Bench 2.0/2.1 intervals
+still include zero; adding the model's own passing rollouts did not show a
+resolved gain over teacher-only traces. In #9359, RLVR1 learned early but RLVR2
+holdout validation was flat to regressing. The sync/async histories are
+confounded by inference-bridge overload and a changed holdout denominator.
+Several domains also lost signal to nonfinalizing generations and verifier
+contracts.
 
 **Deliverable:** a post-training scorecard with capability, completion rate,
 cost, off-distribution regression, and evaluation comparability. **Interview
-test:** “When is faster asynchronous RL worse despite higher training reward?”
+test:** “What would justify promoting the SFT+RFT checkpoint if OT-TB-Lite
+improves but both Terminal-Bench intervals include zero?”
 
 ### Week 8 — Hold a launch review
 
@@ -211,7 +230,9 @@ Use
 [launch-readiness history #8233](https://github.com/marin-community/marin/issues/8233),
 [current hero campaign #8435](https://github.com/marin-community/marin/issues/8435),
 [run handoff #8506](https://github.com/marin-community/marin/issues/8506), and
-the latest standup. Write a two-page recommendation to continue, branch, change,
+the [context-switch trial #9615](https://github.com/marin-community/marin/issues/9615).
+The latest labeled standup at this cutoff is still [September 21 #9324](https://github.com/marin-community/marin/issues/9324).
+Write a two-page recommendation to continue, branch, change,
 or stop a hypothetical hero run. Include data identity, model/numerics, quality
 gates, throughput, checkpoint recovery, evaluation protocol, owner, and rollback
 trigger. Label every assertion by evidence level. This is a fictional review; do

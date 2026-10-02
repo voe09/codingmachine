@@ -4,8 +4,8 @@
 
 ## A case-based tutorial for 2026 interviews
 
-Updated: **2026-09-22**
-Marin evidence cutoff: **2026-09-22**. The companion reading guide also selects external frontier sources through **2026-09-22**; its selection is not a comprehensive survey of the month.
+Updated: **2026-10-01**
+Marin evidence cutoff: **2026-10-01**. The companion reading guide selects external frontier sources through **2026-09-22**; the October update follows Marin's development record, not every new model report.
 
 This tutorial teaches the reasoning used to develop a language model: how to
 turn a capability goal into a training recipe, measure whether an idea works,
@@ -444,7 +444,7 @@ For “How would you choose the size of a model under a compute budget?”:
 **Red flag:** citing Chinchilla as a universal parameter-to-token ratio without
 checking data, architecture, or extrapolation.
 
-**September case update.** The [535B-A23B hero campaign #8435](https://github.com/marin-community/marin/issues/8435) targets 18T tokens, but its scale ladder and context phases are conditional decisions, not a single fixed training recipe. The [fast-track framework PR #9287](https://github.com/marin-community/marin/pull/9287) adds matched dense/MoE experiments at d512–d1280 with a 16k-BPE tokenizer. A proposed [hold-one-feature-out grid #9288](https://github.com/marin-community/marin/issues/9288) is useful for designing a screen; do not cite it as a measured win. Interview question: what evidence at d512 and d1024 would justify spending the next order of magnitude of compute?
+**Current case.** The [535B-A23B hero campaign #8435](https://github.com/marin-community/marin/issues/8435) targets 18T tokens; its later context phases remain conditional. The [fast-track framework PR #9287](https://github.com/marin-community/marin/pull/9287) supplies a d512–d1280 dense/MoE ladder with a 16k-BPE tokenizer. [Marin Belay #9451](https://github.com/marin-community/marin/issues/9451) now uses an eight-minute 8×H100 d512 screen, follows promising variants through d768–d1280, and fits a 1e24-FLOP projection. The current candidate beats the measured small-rung baseline, but d512 uses a different step count, the projection fixes a loss asymptote, and hero-scale training/serving speed is outside the gate. Ask which win survives *fixed time*, *fixed tokens*, and the next hardware scale.
 
 ### Case 2: diagnose an unstable run
 
@@ -665,7 +665,7 @@ positive at d512 and negative at d768.
 negative evidence. Reject from the current recipe; retain the mechanism and
 measurements as a negative result. Do not average the two scales into a win.
 
-**September case update.** The [fast-track PR #9287](https://github.com/marin-community/marin/pull/9287) makes the control contract unusually explicit: data- versus compute-matched runs, width ladder, and tokenizer cache tags that prevent evaluation against the wrong vocabulary. The latter is not housekeeping; a cache mismatch can manufacture an architecture result. Treat the [feature-ablation proposal #9288](https://github.com/marin-community/marin/issues/9288) as an experiment design to critique, not a set of completed outcomes.
+**Current case.** The [fast-track PR #9287](https://github.com/marin-community/marin/pull/9287) separates data- and compute-matched runs and tags tokenizer caches to avoid wrong-vocabulary evaluation. [Marin Belay #9451](https://github.com/marin-community/marin/issues/9451) adds a fixed-wall-clock gate, where a faster variant consumes more tokens within eight minutes. Its four-rung fit makes the promotion claim falsifiable, but the 1e24-FLOP point is extrapolation and hero-scale throughput is unmeasured. Recompute the ranking under fixed tokens and measured hero throughput before treating a small-rung loss win as a production recipe.
 
 ### Case 4: make data a reproducible experimental variable
 
@@ -910,7 +910,7 @@ ranks wait on the collective with balanced loads, investigate transport,
 message sizes, and overlap. Do not optimize the expert GEMM based only on mean
 utilization.
 
-**September case update.** [Context-parallel PR #9119](https://github.com/marin-community/marin/pull/9119) ran 40 diagnostic updates at 262k context on 64 GB200 GPUs, reporting 10.03% median MFU and 1.42% token drops under that configuration. It establishes a finite training path, not long-context model quality. [H100 65k diagnostics #9277](https://github.com/marin-community/marin/issues/9277) report 15.523% MFU for PP24/EP8 at batch 384 versus 9.877% for PP24/EP4/CP2 at batch 96. Since batch and layout differ, the numbers are not an isolated CP speed comparison. [Hero handoff #8506](https://github.com/marin-community/marin/issues/8506) used a 200-step parent/child loss-overlap check (mean difference +0.000306) and explicit checkpoint lineage. Recovery, finite steps, throughput, and capability need separate gates.
+**Current case.** [Context-parallel PR #9119](https://github.com/marin-community/marin/pull/9119) ran 40 diagnostic updates at 262k on 64 GB200 GPUs; it did not establish long-context quality. The newer [hero context experiment #9615](https://github.com/marin-community/marin/issues/9615) restored step 180000 and compared 4K, 8K, and 16K on one rack at the same 4.19M tokens/update. Tokens/s fell 1.6% at 8K and 3.1% at 16K; expert-drop fractions rose 4.5× and 16×. MFU rose with attention FLOPs, so tokens/s is the relevant speed comparison. QK scaling also changed, and 100 steps do not prove an 11-rack continuation. The separate [native-kernel hero handoff #8506](https://github.com/marin-community/marin/issues/8506) passed a 200-step overlap and improved observed 11-rack tokens/s from 2.83M to 3.14M, but later checkpoint stalls exposed recovery risk. Require distinct gates for throughput, loss continuity, expert drops, storage, and capability.
 
 ### Case 6: separate model quality from serving and evaluation
 
@@ -1065,7 +1065,7 @@ A launch-quality suite contains:
 - regression sets from known failures;
 - contamination and benchmark-version records.
 
-**September case update.** The living [Eval Policy v0.1 #9193](https://github.com/marin-community/marin/issues/9193) specifies benchmark versions, metrics, repeats, generation limits, and a protected out-of-distribution set. [Protocol PR #9145](https://github.com/marin-community/marin/pull/9145) records attempted/full counts and uncertainty; [standard-error PR #9196](https://github.com/marin-community/marin/pull/9196) corrected an AIME24 interval from a vacuous [0, 1] to approximately [0.129, 0.197] in a reported case. Repeated trials over 30 questions are not 300 independent questions. [Harbor PR #9327](https://github.com/marin-community/marin/pull/9327) forwards the requested generation-token limit to ordinary requests, illustrating how an output-budget bug can affect apparent score parity. Policy v0.1 is still evolving; quote the tested protocol, not merely its name.
+**Current case.** The [September 24 Eval Policy #9409](https://github.com/marin-community/marin/issues/9409) defines benchmark settings and reserved OOD tests. [Verified-cohort PR #9461](https://github.com/marin-community/marin/pull/9461) checks source YAMLs, evaluator commits, and model configuration before launch and excludes nonconforming records from scored views. The [September 29 revision #9566](https://github.com/marin-community/marin/issues/9566) is still a draft with reported roster/config inconsistencies. In [GraphWalks #9562](https://github.com/marin-community/marin/issues/9562), doubling output budget raised Grug's F1 from 0.073689 to 0.144746 on the same 750 examples; comparing the raw full-run scores would mix 920-example and 750-example denominators. Of the new 750 outputs, 636 still ended at the length cap and failed final-answer parsing. A successful evaluator job does not establish that a low F1 measures only reasoning ability when generation is truncated. [MRCR #9519](https://github.com/marin-community/marin/issues/9519) adds a separate teacher-forced diagnostic: distracted needle recovery fell 9.57 points after SFT while isolated needle gain stayed flat. That result has not located a causal SFT component or explained generated MRCR accuracy.
 
 ### Case 7: choose a post-training signal
 
@@ -1256,7 +1256,7 @@ weak solutions on problems with executable tests.
 Starting with RL on an invalid tool protocol wastes rollout compute and confounds
 interface errors with reasoning.
 
-**September case update.** [Snowball comparison #9225](https://github.com/marin-community/marin/issues/9225) reports sampled SWE-bench Verified scores of 0.145 for its starting checkpoint and 0.307 for SFT+RL, while TB2 goes from 0.094 to 0.050. The starting checkpoint is already Stage-3 SFT; trial counts and concurrency differ, and the domains are not equivalent. This is evidence of capability redistribution, not “RL universally improves agents.” [Async RL #8936](https://github.com/marin-community/marin/issues/8936) found raw GSM8K reward could hide nonterminating answers (120/128 raw successes versus 64 completed in one arm); its [successor #8955](https://github.com/marin-community/marin/issues/8955) still studies safe staleness and quality gates. [OPD/MOPD prototype #9250](https://github.com/marin-community/marin/issues/9250) establishes preliminary parity tests, not a production replacement for RL.
+**Current case.** [Snowball comparison #9225](https://github.com/marin-community/marin/issues/9225) showed SWE-bench gains with SFT+RL alongside a TB2 regression; its “base” was already Stage-3 SFT and trial settings differed. A newer [agentic SFT study #9582](https://github.com/marin-community/marin/issues/9582) measured MiniSweAgent pass@1 on 68 paired OT-TB-Lite tasks rising from 0.118 to 0.255 across three seeds (+0.137, 95% interval [0.083, 0.196]). Terminal-Bench 2.0/2.1 changes had intervals spanning zero; adding the model's own successful rollouts to teacher traces had no resolved advantage over teacher-only SFT. The [sealed mixed-domain RLVR campaign #9359](https://github.com/marin-community/marin/issues/9359) learned in RLVR1 but was flat to regressing on RLVR2 holdout. Early async history had inference-bridge overload and a changed holdout denominator, while nonfinalizing generations and verifier-contract errors starved several domains. Evaluate completion, verifier validity, held-out domains, and comparable harnesses before ranking post-training algorithms.
 
 ### Case 8: develop retrieval, agents, and multimodal systems
 
@@ -1474,6 +1474,10 @@ The [week of September 21 standup #9324](https://github.com/marin-community/mari
 - “The hero resumed correctly” means [issue #8506](https://github.com/marin-community/marin/issues/8506) passed a 200-step lineage/overlap check, not that all later training is numerically identical.
 
 For each sentence, say what evidence would upgrade it to a stronger claim. That exercise is closer to a research interview than memorizing a model card.
+
+#### Worked extraction: an October context-switch decision
+
+The last labeled standup remains [September 21 #9324](https://github.com/marin-community/marin/issues/9324). Follow the later [hero context issue #9615](https://github.com/marin-community/marin/issues/9615) instead of assuming the standup is current. At step 180000, three seeds per arm held tokens/update fixed and measured a modest 16K throughput cost, a larger expert-drop increase, and no evaluation. In its comments, a 16K jump is proposed, with QK alternatives and a save/resume rehearsal still to test. Write a pre-decision memo: what loss, router, evaluation, data-order, and checkpoint evidence would make the switch acceptable? Then classify each later comment as a measurement, extrapolation, or proposed gate.
 
 ---
 
@@ -1725,7 +1729,11 @@ quality.
 11. [Mixture #9126](https://github.com/marin-community/marin/issues/9126) and [SFT overlap #9212](https://github.com/marin-community/marin/issues/9212): practice compute-equivalent accounting and contamination caveats.
 12. [Context-parallel PR #9119](https://github.com/marin-community/marin/pull/9119) and [H100 diagnostics #9277](https://github.com/marin-community/marin/issues/9277): distinguish finite-step throughput from long-context capability.
 13. [Eval Policy #9193](https://github.com/marin-community/marin/issues/9193) and [Snowball comparison #9225](https://github.com/marin-community/marin/issues/9225): separate protocol design from capability-specific post-training outcomes.
-14. [September 21 standup #9324](https://github.com/marin-community/marin/issues/9324): use it as a current index, then read linked primary artifacts.
+14. [September 21 standup #9324](https://github.com/marin-community/marin/issues/9324): use the last labeled standup at this cutoff as a historical index, then follow newer issues.
+15. [Marin Belay #9451](https://github.com/marin-community/marin/issues/9451): contrast fixed-time hill climbing with data-/compute-matched scaling and inspect the 1e24-FLOP extrapolation.
+16. [Hero context diagnostics #9615](https://github.com/marin-community/marin/issues/9615) and [native-kernel handoff #8506](https://github.com/marin-community/marin/issues/8506): separate a proposed context switch from an accepted production handoff.
+17. [September 24 Eval Policy #9409](https://github.com/marin-community/marin/issues/9409), [verified cohorts #9461](https://github.com/marin-community/marin/pull/9461), [GraphWalks #9562](https://github.com/marin-community/marin/issues/9562), and [MRCR #9519](https://github.com/marin-community/marin/issues/9519): practice versioned protocols and matched-denominator comparisons.
+18. [Agentic SFT #9582](https://github.com/marin-community/marin/issues/9582) and [mixed-domain RLVR #9359](https://github.com/marin-community/marin/issues/9359): preserve task-specific gains, null results, and rollout/verifier failures.
 
 ### 19. Foundation sources
 
