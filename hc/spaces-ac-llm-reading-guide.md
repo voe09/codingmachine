@@ -2,16 +2,16 @@
 
 # 科学空间 + SOTA LLM 阅读路线
 
-更新日期：**2026-11-18**
+更新日期：**2026-11-27**
 
-资料截点：外部论文与作者文章的选读清单截至 **2026-11-18**；Marin 实践案例截至 **2026-11-18**。`前沿`条目优先采用论文、技术报告、官方博客、模型卡和官方仓库；新近工作的证据还在积累，阅读时要把作者自报结果和独立复现分开看。这是一份精选路线，不是对所有新论文的全面盘点。
+资料截点：外部论文与作者文章的选读清单截至 **2026-11-27**；Marin 实践案例截至 **2026-11-27**。`前沿`条目优先采用论文、技术报告、官方博客、模型卡和官方仓库；新近工作的证据还在积累，阅读时要把作者自报结果和独立复现分开看。这是一份精选路线，不是对所有新论文的全面盘点。
 
 这份文档的目标，不再是“先看 Su，再看站外论文”，而是把它们**揉成一条可执行的阅读路线**。  
 核心思路是：
 
 1. 先用经典论文建立骨架。
 2. 再用苏剑林的博客把关键机制真正想明白。
-3. 再补截至 2026-11-18 的技术报告与论文，理解 frontier 的主要方向；用下文的 Marin 案例观察研发判断如何落地。
+3. 再补截至 2026-11-27 的技术报告与论文，理解 frontier 的主要方向；用下文的 Marin 案例观察研发判断如何落地。
 4. 最后对照官方代码仓库和 benchmark，避免停留在“只会读 paper”。
 
 如果只用一句话概括：  
@@ -53,17 +53,17 @@
 - **长上下文到底怎么扩，RoPE 为什么老是绕不过去？**  
   `Su T7 / T8 / T9 / T12 / T15 / T16 -> YaRN -> LongRoPE -> hybrid 模型长上下文解码 -> yarn 代码`
 - **KV cache、attention 效率、MLA、线性注意力最近怎么演化？**  
-  `GQA -> Su 10091 -> DeepSeek-V2 -> Su T20 / T21 -> Kimi Linear -> GDN2 / Su 11945 -> TTT / Su 11993 -> Attention Residuals -> DeepSeek-V4 -> Qwen3.8-Next -> DeepSeek-V4.1-Flash -> Continuum Attention / Su 11980`
+  `GQA -> Su 10091 -> DeepSeek-V2 -> Su T20 / T21 -> Kimi Linear -> GDN2 / Su 11945 / Stable GDN2 -> TTT / Su 11993 -> Attention Residuals -> DeepSeek-V4 -> Qwen3.8-Next -> DeepSeek-V4.1-Flash -> Continuum Attention / Su 11980`
 - **MoE 和大规模训练 recipe 为什么现在又变成重点？**  
-  `Switch / GLaM / Mixtral -> Su MoE 环游记 1-9 -> Scaling Laws / Chinchilla -> AdaGrad / Shampoo / SOAP -> Muon / QK-Clip -> Su 炼丹 8-11 / 慢即是快 1-2 -> 有效学习率 / AIR -> Qwen3.8-Next`
+  `Switch / GLaM / Mixtral -> Su MoE 环游记 1-9 -> Scaling Laws / Chinchilla -> AdaGrad / Shampoo / SOAP -> Muon / QK-Clip -> Su 炼丹 8-11 / 慢即是快 1-2 -> 有效学习率 / AIR -> 旋转调度 / Su Muon 优化理论 -> Qwen3.8-Next`
 - **Tokenizer 还是不是核心问题？**  
   `BPE / SentencePiece -> Su BytePiece / 随机分词 -> ByT5 / MEGABYTE / BLT`
 - **pretraining / mid-training 的数据和目标函数怎么读？**
   `The Pile / Dedup / DoReMi -> OLMo / DataComp-LM -> Don’t Stop Pretraining -> 损失重加权 -> DeepSeekMath / Qwen3 -> K2-Horizon 开放资料 -> Su LM Loss`
 - **post-training 现在最前沿的主线是什么？**  
-  `InstructGPT -> DPO / ORPO / SimPO -> Online Preference -> DeepSeek-R1 -> SDPO -> OPD / Lightning OPD -> Rethinking OPD II -> off/on-policy 目标与 OPD→RL -> OPD 技能/知识、teacher correction 与学习动力学`
+  `InstructGPT -> DPO / ORPO / SimPO -> Online Preference -> DeepSeek-R1 -> SDPO -> OPD / Lightning OPD -> Rethinking OPD II -> off/on-policy 目标与 OPD→RL -> OPD 技能/知识、teacher correction 与学习动力学 -> reasoning effort / CARE-OPD`
 - **agentic training 到底是在训什么？**  
-  `Kimi K2 / Qwen3-Coder-Next -> Agent Lightning -> MAD-OPD -> Qwen-AgentWorld -> Kimi K3 / Qwen3.8 -> AutoCompact -> SWE-Trail -> agent 经验适应 -> agent harness / benchmark`
+  `Kimi K2 / Qwen3-Coder-Next -> Agent Lightning -> MAD-OPD -> Qwen-AgentWorld -> Kimi K3 / Qwen3.8 -> AutoCompact -> SWE-Trail -> agent 经验适应 -> agent patch 必要性 -> agent harness / benchmark`
 
 ---
 
@@ -198,6 +198,8 @@ Su 在这里的价值，比很多综述都高，因为他会强迫你问“为�
     TTT 层把隐状态设为可更新的模型；先分清序列层内部的测试时更新与整个 LLM 的后训练。
 28. [平均之路：从Attention到TTT](https://spaces.ac.cn/archives/11993) `深挖`
     2026-11-01。接着 Su 的 Softmax 线性化文章读，比较注意力、线性递归状态与 TTT 的更新形式。
+29. [Stable Gated DeltaNet-2: Understanding and Mitigating Recurrent State Instability](https://arxiv.org/abs/2611.34051) `前沿`
+    2026-11-25。接在 GDN2 和 Su 的稳定性分析后读：作者将长上下文训练失稳归因于非对称擦除造成的状态放大，并提出对称擦除与受控残差写入。论文的状态增长上界依赖理论假设；约 1.6B 参数模型上的 128K 检索与下游结果仍需按实验设置解读。
 
 ### 代码 / kernel / 实现
 
@@ -220,7 +222,7 @@ Su 在这里的价值，比很多综述都高，因为他会强迫你问“为�
 - Attention Residuals / mHC：主要解决 **层间信息混合方式**
 - Kimi K3：观察 KDA、Gated MLA、AttnRes 和 LatentMoE 如何进入一套完整 recipe
 - Qwen3.8-Next：对照另一条 Gated DeltaNet + sparse MoE 路线，并把结构、训练成本与稳定性放在同一组消融实验里看
-- GDN2 与 Continuum Attention：前者修改固定大小状态的擦除/写入，后者重新定义 Softmax 注意力的离散查找；复杂度和验证规模也不同
+- GDN2 与 Continuum Attention：前者修改固定大小状态的擦除/写入，Stable GDN2 进一步处理状态失稳；后者重新定义 Softmax 注意力的离散查找。复杂度和验证规模也不同
 
 ---
 
@@ -294,6 +296,10 @@ Su 在这里的价值，比很多综述都高，因为他会强迫你问“为�
     2026-11-09。接在步长调度系列与 Schedule-Free 原论文后读，比较“不预设终点”和“终点 loss 最优”两个目标。
 43. [Pretraining Data Scale Reverses the Muon-AdamW Fine-Tuning Gap](https://arxiv.org/abs/2611.03633) `前沿`
     2026-11-02。作者在所测数据预算与模型规模下观察到：Muon 的预训练 loss 优势不能保证微调后仍优于 AdamW；读 margin-to-spread 分析时区分实证趋势与简化模型中的证明。
+44. [From Learning Rates to Rotational Schedules: Finite-Horizon Theory on the Sphere](https://arxiv.org/abs/2611.29579) `前沿`
+    2026-11-22。接在有效学习率、权重归一化和 MuonH 后读：把学习率调度转成参数方向的旋转调度，区分球面上的收敛界与 Adam / Muon、AdamH / MuonH 的模型实验。作者报告 Hyperball 类优化器偏好线性衰减，而参数范数动态改变常规优化器的调度排序。
+45. [Muon背后的优化理论：1. 全量、随机与动量](https://spaces.ac.cn/archives/12014) `深挖`
+    2026-11-23。从全量梯度、随机梯度和动量的优化理论切入 Muon；与第 29-30、44 项对读，分别检查收敛假设、矩阵更新几何和有限训练时长的调度问题，不把不同设定下的结论合并成通用 recipe。
 
 ### 代码 / 系统
 
@@ -472,6 +478,10 @@ Su 对数据工程没有像 RoPE 那样的完整系列；第 13 篇补的是目�
     2026-10-15。研究共享基座的 specialist 如何用 rollout 激活的二阶矩做逐层最小二乘融合，无须梯度更新；名称中的“on-policy”指采样分布，方法与上面的梯度式 OPD 要分开比较。
 38. [Learning Dynamics of On-Policy Distillation](https://arxiv.org/abs/2611.08016) `前沿`
     2026-11-05。把 OPD 的反馈拆成 teacher 信号转为参数更新，以及更新影响后续 rollout 分布；作者报告局部 teacher 对齐有时会增加失败续写的概率。与 Marin 的 OPD/SFT 漂移案例对读，不把两种漂移指标混为一谈。
+39. [Rethinking Reasoning Effort Training in Large Language Models: On-Policy Distillation or Reinforcement Learning?](https://arxiv.org/abs/2611.32131) `前沿`
+    2026-11-24。比较长度惩罚 RL 与多 teacher OPD 对推理长度、不同 effort 档位和正确率的影响；论文发现单一策略的压缩与多档位分离需要区分训练信号。其 agentic 迁移结果提醒读者：训练中见过的状态上的档位分离，不能直接外推到新环境。
+40. [Collect for Coverage, Replay with Evidence: Adaptive and Efficient On-Policy Distillation for Long-Horizon Agents](https://arxiv.org/abs/2611.34756) `前沿`
+    2026-11-25。沿 long-horizon agent 的轨迹采集与前缀重放读：student 引导的 teacher 续写扩展历史覆盖，置信度门控过滤监督，事后执行证据决定重放哪些轮次。作者在 SWE-bench Verified 报告 59.5% 任务成功率，训练耗时和环境动作数分别比异步在线 OPD 少 45% 与 44%；比较时核对采集预算和 baseline。
 
 ### 7.4 Su 在这一支怎么读？
 
@@ -493,6 +503,7 @@ Su 在 post-training 上没有像 RoPE 那样的完整长系列。可以这样�
 5. token-level、step-level、offline 和 online OPD 各自改变了哪一种监督信号？数据覆盖、目标分布与后续 RL 收益能否分开测量？
 6. OPD 的收益来自新知识、组合技能还是少数关键 teacher correction？模型融合与梯度式蒸馏的成本怎样比较？
 7. teacher 对齐怎样改变下一轮 rollout 的样本分布？相同任务进度下的行为漂移如何测量？
+8. 控制 reasoning effort 是压短同一策略，还是训练可分离的档位？长轨迹的覆盖、teacher 可靠性和重放选择怎样分别验证？
 
 回答这些问题后，你应该能区分 post-training 的算法目标、监督信号和 benchmark 结果。
 
@@ -531,6 +542,8 @@ Su 在 post-training 上没有像 RoPE 那样的完整长系列。可以这样�
     2026-11-01。用旧轨迹指导下一次从何处分叉采集，让 agent 仍只看到普通上下文；作者在 124B student 上报告 SWE-bench Multilingual / Pro 相对独立采样分别提高 2.33 / 1.60 个百分点。检查采集预算与训练数据是否匹配。
 14. [Where Should LLM Agents Adapt at Test Time? In Context, in Weights, or Both](https://arxiv.org/abs/2611.19700) `前沿`
     2026-11-15。在四类环境的 109 个任务上比较上下文记忆、GRPO 与 SDPO；最佳单独上下文策略的平均成功率为 49.4%，加入 GRPO 后为 51.6%，均来自作者的同一在线协议。重点看复用经验时是否跳过当前任务的检查。
+15. [How Much Do Coding Agents Over-Edit, and Why? An Empirical Study of Unneeded Edits in Repository-Level Agent Patches](https://arxiv.org/abs/2611.34875) `前沿`
+    2026-11-25。用逐块撤销和重跑测试区分补丁大小与代码必要性：作者分析 7,660 条已解决任务的 agent 轨迹，并与开发者补丁用同一方法比较。SWE-bench Verified 中 agent 的额外改动多数是测试和文档，代码块约 11% 被判为不必要；这种判定仍取决于测试能覆盖哪些行为。
 
 ### 代码 / agent 工具 / benchmark
 
@@ -610,6 +623,22 @@ Su 在 post-training 上没有像 RoPE 那样的完整长系列。可以这样�
 18. [Qwen3.8-Next 架构报告](https://arxiv.org/abs/2608.30320)
 19. [DeepSeek-V4.1-Flash](https://arxiv.org/abs/2609.19969)
 20. [Qwen-AgentWorld](https://arxiv.org/abs/2606.24597)
+
+---
+
+## 2026-11-27 更新记录
+
+外部选读新增 Su 的 Muon 优化理论首篇，并以旋转调度论文连接有效学习率与 MuonH 实验；Stable GDN2 论文接在 GDN2 和 Su 的稳定性分析之后。Post-training 补入 reasoning effort 的 OPD/RL 对照及 long-horizon agent 的 CARE-OPD；coding agent 部分补入逐块检验补丁必要性的研究。新论文均为预印本，文中结果按作者报告表述。
+
+## 2026-11-27：Marin 研发案例续篇
+
+这三项分别检验优化器对照、RL 阶段的评测变化，以及减少 agent 重复输出时的正确率约束。按各自的控制组和评测协议阅读，不把不同任务的分数合并比较。
+
+| 对应主题 | 新证据 | 阅读时的边界 |
+|---|---|---|
+| 权重归一化与 MuonC（第 4 节） | [Belay 优化器对照 #11785](https://github.com/marin-community/marin/issues/11785)在调好衰减和调度的 MuonC 基线前，权重归一化方案没有稳定领先：d512 八分钟 speedrun 的 nonsi + schedule 相对 MuonC，9 个留出 seed 的 Paloma macro loss 差为 +0.0007（95% 区间 −0.0033 至 +0.0046；越低越好）。 | 这组差异在预设的 0.005 平局带内；其他 ladder 宽度的对照重复次数较少，不能把 d512 的平局直接外推到所有宽度。 |
+| SFT→RL 评测变化（第 7、8 节） | [Mochi / Snowball long-loop 对照 #12201](https://github.com/marin-community/marin/issues/12201)记录各自封存的 Micro210 结果：Mochi `.123` 从 SFT 到 RL 的 pooled score 为 59.74%→52.91%（−6.82 个百分点）；Snowball round 1 为 40.23%→45.26%（+5.03 个百分点）。 | 两组使用不同底座、训练 recipe、评测政策与 judge；这是一对方向相反的各自阶段观测，不能据此判断 RL 对两种模型的相对因果作用。 |
+| 循环抑制的正确率护栏（第 8 节） | [Mochi 在线 FTPO 试验 #12240](https://github.com/marin-community/marin/issues/12240)在同一 128 题、16K-token pilot 上，S2 从起点到第 3 步的精确尾部循环指标（循环数/上界）由 6 增至 11，满分题数由 75 降至 66；预设的正确率护栏触发后停止训练。 | 这是配对 pilot 的停止结果，不能推断更长训练的效果；只覆盖固定题集、精确尾部循环检测器和这次预算。 |
 
 ---
 
