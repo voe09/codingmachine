@@ -632,12 +632,16 @@ Su 在 post-training 上没有像 RoPE 那样的完整长系列。可以这样�
 
 ## 2026-11-27：Marin 研发案例续篇
 
-这三项分别检验优化器对照、RL 阶段的评测变化，以及减少 agent 重复输出时的正确率约束。按各自的控制组和评测协议阅读，不把不同任务的分数合并比较。
+本次截点最新标记为 standup 的记录是[11 月 9 日周会 #11597](https://github.com/marin-community/marin/issues/11597)；较新的结果来自后续 issue 与合并 PR。按[八周案例本](./MARIN_LLM_TRAINING_STUDY_PLAN.md)先写预测，再按各自的控制组、评测协议和结果更正判断。
 
 | 对应主题 | 新证据 | 阅读时的边界 |
 |---|---|---|
 | 权重归一化与 MuonC（第 4 节） | [Belay 优化器对照 #11785](https://github.com/marin-community/marin/issues/11785)在调好衰减和调度的 MuonC 基线前，权重归一化方案没有稳定领先：d512 八分钟 speedrun 的 nonsi + schedule 相对 MuonC，9 个留出 seed 的 Paloma macro loss 差为 +0.0007（95% 区间 −0.0033 至 +0.0046；越低越好）。 | 这组差异在预设的 0.005 平局带内；其他 ladder 宽度的对照重复次数较少，不能把 d512 的平局直接外推到所有宽度。 |
-| SFT→RL 评测变化（第 7、8 节） | [Mochi / Snowball long-loop 对照 #12201](https://github.com/marin-community/marin/issues/12201)记录各自封存的 Micro210 结果：Mochi `.123` 从 SFT 到 RL 的 pooled score 为 59.74%→52.91%（−6.82 个百分点）；Snowball round 1 为 40.23%→45.26%（+5.03 个百分点）。 | 两组使用不同底座、训练 recipe、评测政策与 judge；这是一对方向相反的各自阶段观测，不能据此判断 RL 对两种模型的相对因果作用。 |
+| 长上下文训练与模型交接（第 2、4 节） | [Hero 262K 结果 #8435](https://github.com/marin-community/marin/issues/8435#issuecomment-6748198431)选择 log-floor-65536²：相对 global 1.84，262K clean macro loss 为 1.6434 对 1.6433，teacher-forced MRCR NLL 为 0.0223 对 0.0252。[导出 schema 3 #11128](https://github.com/marin-community/marin/pull/11128)和[Megatron 支持 #11129](https://github.com/marin-community/marin/pull/11129)把缩放规则接到下游。 | 两种配方各只有一次训练；文档抽样置信区间没有覆盖训练 seed。NLL 改善不能直接推出生成式检索成功。 |
+| 编译缓存与墙钟成本（第 4 节） | [Snowball SFT 双速审计 #11909](https://github.com/marin-community/marin/issues/11909)在 64 张 H100 上观察到 44–55 秒与 120–128 秒两种 step 速度：6 个慢运行都在任务内编译，20 个有阶段日志的快运行都加载缓存可执行文件。[autotune 目录对照 #11793](https://github.com/marin-community/marin/issues/11793)中，默认逐进程目录编译出 24 种可执行文件并卡在第一步；统一目录编译出一种可执行文件并完成 3 步。 | 双速审计是相关性证据；目录对照每组只有一次运行，节点集合也不同。它缩小排查范围，仍未完全隔离原始慢速和卡顿的原因。 |
+| 评测与服务协议（第 8 节） | [2026-10-16 评测政策 #10197](https://github.com/marin-community/marin/issues/10197)区分可计分的模型失败和基础设施缺失。[Base-model 格式研究 #10935](https://github.com/marin-community/marin/issues/10935)只增加回合结束 token，Qwen3.5 base 的 SWE-bench Verified 从 0.05 到 0.55。 | 权重未变，但可核验题数从 20 到 40；不能把分数差当作训练收益。[TruthfulQA 选项打乱 #12069](https://github.com/marin-community/marin/pull/12069)在截点仍未合并，也未重跑模型分数。 |
+| SFT 数据筛选（第 7、8 节） | [Mochi 弱点分析 #11723](https://github.com/marin-community/marin/issues/11723)在配对的约束探针上看到 thinking-off 98/120、thinking-on 116/120；在缺失工具参数探针上分别有 57/60 误调用和 59/59 正确不调用。合成多 needle 数据的一小时 Snowball 续训未改善完整 MRCR-65K，因此暂不进入 Mochi mix。 | 探针说明行为差异；一次短 Snowball 续训不能证明这类数据在 Mochi 或其他训练长度下无效。 |
+| SFT→RL 评测变化（第 7、8 节） | [Mochi / Snowball long-loop 对照 #12201](https://github.com/marin-community/marin/issues/12201)记录各自封存的 Micro210 结果：Mochi `.123` 从 SFT 到 RL 的 pooled score 为 59.74%→52.91%（−6.82 个百分点）；Snowball round 1 为 40.23%→45.26%（+5.03 个百分点）。 | Micro210 汇总异质的部分分奖励，不是 pass@1；两组使用不同底座、训练 recipe、评测政策与 judge。Mochi 的 holdout 评测均未达到 180/200 选点门槛，最终 step 是 fallback；不能据此判断 RL 对两种模型的相对因果作用。 |
 | 循环抑制的正确率护栏（第 8 节） | [Mochi 在线 FTPO 试验 #12240](https://github.com/marin-community/marin/issues/12240)在同一 128 题、16K-token pilot 上，S2 从起点到第 3 步的精确尾部循环指标（循环数/上界）由 6 增至 11，满分题数由 75 降至 66；预设的正确率护栏触发后停止训练。 | 这是配对 pilot 的停止结果，不能推断更长训练的效果；只覆盖固定题集、精确尾部循环检测器和这次预算。 |
 
 ---

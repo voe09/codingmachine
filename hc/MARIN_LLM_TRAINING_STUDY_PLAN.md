@@ -1,6 +1,6 @@
 # Learn model development by following Marin's decisions
 
-Research snapshot: **2026-10-01**. The
+Research snapshot: **2026-11-27**. The
 [Marin repository](https://github.com/marin-community/marin) moves quickly;
 issue status and run claims below describe what was public at this cutoff, not a
 permanent verdict. For LLM theory and interview derivations, use the
@@ -12,13 +12,16 @@ This is a reading-and-analysis apprenticeship, not a recipe for reproducing a
 multi-rack run. You need a browser, a notebook, and enough arithmetic to compare
 budgets and measurements. Your output is a **casebook of decisions** that you
 can defend in an interview.
+If your interview is before the end of 2026, use the tutorial's
+[five-week route](./LLM_INTERVIEW_TUTORIAL_2026.md#five-week-route-for-a-december-2026-interview)
+to prioritize these cases.
 
 ## The method: reconstruct a decision, not a timeline
 
 For each case, read in this order:
 
 1. Start with a dated
-   [weekly standup](https://github.com/marin-community/marin/issues/9324).
+   [weekly standup](https://github.com/marin-community/marin/issues/11597).
    Extract the decision or blocker, not every status line.
 2. Open the linked experiment issue. Record its hypothesis, control, proposed
    intervention, promotion criterion, and what remained uncertain _before_ the
@@ -69,7 +72,7 @@ it?” Read only the slice needed for the current decision.
 
 Do not treat `main` as a time machine. Pin a commit when reconstructing a
 historical decision; this snapshot inspected
-[Marin commit `f5693b8`](https://github.com/marin-community/marin/commit/f5693b8671c340ac48207a603470e44b5dbb952d).
+[Marin commit `e19b299`](https://github.com/marin-community/marin/commit/e19b29901a8da95c5898d38973448ecf61509fa2).
 
 ## Eight-week casebook
 
@@ -171,72 +174,93 @@ passed a 200-step overlap and improved observed 11-rack tokens/s from 2.83M to
 3.14M, but later checkpoint stalls show why a good performance handoff still
 needs storage and recovery gates.
 
-**Deliverable:** a table with six distinct gates: memory, finite steps,
-throughput, loss continuity, expert drops, and long-context capability.
-**Interview test:** “Would you switch the hero directly to 16K
-from these diagnostics? What must be rehearsed first?”
+The later [262K result #8435](https://github.com/marin-community/marin/issues/8435#issuecomment-6748198431)
+and [recipe PR #11044](https://github.com/marin-community/marin/pull/11044)
+complete the earlier decision chain. Log-scaled and global-1.84 recipes tied
+on clean 262K macro loss (1.6434 vs 1.6433), while log scaling lowered
+teacher-forced MRCR full-context NLL from 0.0252 to 0.0223. There was one
+training seed per recipe; the NLL result is not a demonstrated gain in
+generated retrieval accuracy. [Export schema 3 #11128](https://github.com/marin-community/marin/pull/11128)
+and [Megatron support #11129](https://github.com/marin-community/marin/pull/11129)
+show why training, export, SFT, and RL must implement the same attention scale.
+For a systems confounder, [Snowball SFT's two-speed audit #11909](https://github.com/marin-community/marin/issues/11909)
+found 44–55 versus 120–128 seconds/update correlated with cached versus in-job
+compilation across audited 64-H100 runs. A related [autotune-dir pair #11793](https://github.com/marin-community/marin/issues/11793)
+compiled 24 distinct executables and hung at update 1 with default per-process
+dirs, versus one executable and three finite updates with a uniform populated
+dir. There was one run per arm on different node sets, so the cause of the
+original speed split and hang is not fully isolated.
+
+**Deliverable:** a gate table for memory, finite steps, throughput, loss
+continuity, expert drops, export/serving parity, and long-context capability.
+**Interview test:** “Which November results go beyond the October 16K
+diagnostics, and which questions still require generated-task evaluation?”
 
 ### Week 6 — Evaluation is an experimental protocol
 
 Read
-[September 24 Eval Policy #9409](https://github.com/marin-community/marin/issues/9409),
+[October 16 Eval Policy #10197](https://github.com/marin-community/marin/issues/10197),
 [verified-cohort gate PR #9461](https://github.com/marin-community/marin/pull/9461),
 [GraphWalks failure analysis #9562](https://github.com/marin-community/marin/issues/9562),
-and [MRCR distractor study #9519](https://github.com/marin-community/marin/issues/9519).
+and [base-model format study #10935](https://github.com/marin-community/marin/issues/10935).
 Specify the benchmark split, model checkpoint, prompt and reasoning mode,
 generation budget, metric, seeds, attempted/full counts, and confidence interval
-_before_ a comparison. The September 24 policy has pinned verified cohorts;
-the [September 29 revision #9566](https://github.com/marin-community/marin/issues/9566)
-is still a draft with open consistency questions. In GraphWalks, doubling the
-output budget raised Grug's F1 from 0.073689 to 0.144746 on the **same 750
-examples**; the original and rerun totals covered 920 and 750 examples, so
-their overall scores cannot be compared directly. The MRCR probe found a
-9.57-point drop in teacher-forced needle recovery amid distractors after SFT,
-with isolated needle gain unchanged. Neither probe establishes the cause of
-the model's generated long-context errors.
+_before_ a comparison. The October policy defines reportable benchmark settings
+and distinguishes gradeable model failures from infrastructure absences. In
+GraphWalks, doubling the output budget raised Grug's F1 from 0.073689 to
+0.144746 on the **same 750 examples**; the original and rerun totals covered
+920 and 750 examples, so
+their overall scores cannot be compared directly. In #10935, adding Qwen3.5
+base's assistant-turn stop token changed SWE-bench Verified from 0.05 to 0.55
+without training, while verified-row coverage also changed from 20 to 40.
+An evaluator score is a property of model, serving contract, harness, and
+scored population together.
 
 **Deliverable:** a one-page evaluation protocol and an example of how a serving
 or harness change could masquerade as a model improvement. **Interview test:**
-“The output budget doubles and F1 rises, but fewer examples fit the context
-window. What is the valid comparison?”
+“The same weights score ten times higher after a stop-token change. What
+exactly improved, and what must be held fixed to compare model quality?”
 
 ### Week 7 — Post-training optimizes a narrower distribution
 
 Read
 [Snowball comparison #9225](https://github.com/marin-community/marin/issues/9225),
-[agentic SFT study #9582](https://github.com/marin-community/marin/issues/9582),
-and [sealed mixed-domain RLVR campaign #9359](https://github.com/marin-community/marin/issues/9359).
+[Mochi SFT weakness analysis #11723](https://github.com/marin-community/marin/issues/11723),
+and [long-loop comparison #12201](https://github.com/marin-community/marin/issues/12201).
 In #9225, SFT+RL scored 0.307 on the sampled SWE-bench Verified set versus 0.145
 for its “base,” yet TB2 fell from 0.094 to 0.050. That “base” is already a
 Stage-3 SFT checkpoint, not raw pretraining. Different trial counts and
-concurrency prevent a clean universal ranking. In #9582, MiniSweAgent-format
-SFT raised pass@1 on the same 68 OT-TB-Lite tasks from 0.118 to 0.255 across
-three seeds, a paired +0.137 [0.083, 0.196]. Terminal-Bench 2.0/2.1 intervals
-still include zero; adding the model's own passing rollouts did not show a
-resolved gain over teacher-only traces. In #9359, RLVR1 learned early but RLVR2
-holdout validation was flat to regressing. The sync/async histories are
-confounded by inference-bridge overload and a changed holdout denominator.
-Several domains also lost signal to nonfinalizing generations and verifier
-contracts.
+concurrency prevent a clean universal ranking. #11723 found that Mochi's
+thinking-off versus thinking-on probe changed deterministic-constraint
+accuracy from 98/120 to 116/120. On missing-argument tool prompts, thinking
+off over-called on 57/60; thinking on abstained on 59/59. A one-hour synthetic
+multi-needle SFT continuation on Snowball did not improve full MRCR-65K
+against its control, so that data stayed out of Mochi's mix. In #12201,
+Mochi SFT→RL lost 6.82 pooled Micro210 reward points while Snowball
+round 1 gained 5.03 under a different policy. Micro210 pools heterogeneous
+partial-credit rewards, not pass@1. Their bases, recipes, judges,
+serving stacks, and scored populations differ; this is not evidence that RL
+causally hurts one base and helps the other. Mochi's checkpoint selector also
+fell back to the final step because no holdout evaluation met its 180/200
+coverage gate.
 
 **Deliverable:** a post-training scorecard with capability, completion rate,
 cost, off-distribution regression, and evaluation comparability. **Interview
-test:** “What would justify promoting the SFT+RFT checkpoint if OT-TB-Lite
-improves but both Terminal-Bench intervals include zero?”
+test:** “Training reward rises, but no holdout evaluation meets the coverage
+gate. Which checkpoint can you defend?”
 
 ### Week 8 — Hold a launch review
 
 Use
 [launch-readiness history #8233](https://github.com/marin-community/marin/issues/8233),
-[current hero campaign #8435](https://github.com/marin-community/marin/issues/8435),
+[completed hero pretraining record #8435](https://github.com/marin-community/marin/issues/8435),
 [run handoff #8506](https://github.com/marin-community/marin/issues/8506), and
-the [context-switch trial #9615](https://github.com/marin-community/marin/issues/9615).
-The latest labeled standup at this cutoff is still [September 21 #9324](https://github.com/marin-community/marin/issues/9324).
-Write a two-page recommendation to continue, branch, change,
-or stop a hypothetical hero run. Include data identity, model/numerics, quality
-gates, throughput, checkpoint recovery, evaluation protocol, owner, and rollback
-trigger. Label every assertion by evidence level. This is a fictional review; do
-not claim authority over Marin's actual run.
+the [November 9 standup #11597](https://github.com/marin-community/marin/issues/11597).
+Write a two-page retrospective on the pretraining decisions, then a hypothetical
+promotion memo for the next SFT/RL stage. Include data identity, model/numerics,
+quality gates, throughput, checkpoint recovery, evaluation protocol, owner,
+and rollback trigger. Label every assertion by evidence level. This is a
+fictional review; do not claim authority over Marin's actual run.
 
 **Deliverable:** the review memo plus a five-minute oral defense. **Interview
 test:** “What would make you delay a launch despite a promising validation
